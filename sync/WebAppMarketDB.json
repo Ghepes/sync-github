@@ -1,0 +1,206 @@
+{
+  "activities": [
+    {
+      "description": "Next 99 user registered: admin90 (admin)",
+      "timestamp": "2025-04-23T21:58:03.567Z",
+      "user": "System",
+      "id": 1
+    },
+    {
+      "description": "User logged in: admin90",
+      "timestamp": "2025-04-23T21:58:09.439Z",
+      "user": "admin90",
+      "id": 2
+    },
+    {
+      "description": "New product added: IT Solutions & latest Bootstrap HTML",
+      "timestamp": "2025-04-23T22:28:47.980Z",
+      "user": "admin90",
+      "id": 3
+    },
+    {
+      "description": "New blog post added: Moderne webapp",
+      "timestamp": "2025-04-23T22:51:23.092Z",
+      "user": "admin90",
+      "id": 4
+    },
+    {
+      "description": "New user registered: User1",
+      "timestamp": "2025-04-23T22:54:56.037Z",
+      "user": "System",
+      "id": 5
+    }
+  ],
+  "blogs": [
+    {
+      "title": "000 Moderne webapp 1",
+      "description": "1 Modern IT solutions template designed to the needs of businesses, startups, and tech companies. Built with the latest Bootstrap framework, it offers a fully responsive and user-friendly layout, ensuring a seamless experience across all devices.",
+      "imageUrl": "https://storage.googleapis.com/media-data-web-glob/product-by-category-img/zmw/preview.__large_preview.png",
+      "tags": [
+        "new",
+        "theme",
+        "webapp",
+        "next"
+      ],
+      "updatedAt": "2025-04-16T22:51:23.090Z",
+      "createdAt": "2025-04-16T22:51:23.090Z",
+      "id": 1
+    },
+    {
+      "title": "Moderne webapp 2",
+      "description": "2 Modern IT solutions template designed to the needs of businesses, startups, and tech companies. Built with the latest Bootstrap framework, it offers a fully responsive and user-friendly layout, ensuring a seamless experience across all devices.",
+      "imageUrl": "https://storage.googleapis.com/media-data-web-glob/product-by-category-img/zmw/preview.__large_preview.png",
+      "tags": [
+        "new",
+        "theme",
+        "webapp",
+        "alfa"
+      ],
+      "updatedAt": "2025-04-17T22:51:23.090Z",
+      "createdAt": "2025-04-17T22:51:23.090Z",
+      "id": 2
+    },
+    {
+      "title": "Moderne webapp 3",
+      "description": "3 Modern IT solutions template designed to the needs of businesses, startups, and tech companies. Built with the latest Bootstrap framework, it offers a fully responsive and user-friendly layout, ensuring a seamless experience across all devices.",
+      "imageUrl": "https://storage.googleapis.com/media-data-web-glob/product-by-category-img/zmw/preview.__large_preview.png",
+      "tags": [
+        "new",
+        "theme",
+        "webapp",
+        "veron"
+      ],
+      "updatedAt": "2025-04-18T22:51:23.090Z",
+      "createdAt": "2025-04-18T22:51:23.090Z",
+      "id": 3
+    },
+    {
+      "title": "Moderne webapp 4",
+      "description": "4 Modern IT solutions template designed to the needs of businesses, startups, and tech companies. Built with the latest Bootstrap framework, it offers a fully responsive and user-friendly layout, ensuring a seamless experience across all devices.",
+      "imageUrl": "https://storage.googleapis.com/media-data-web-glob/product-by-category-img/zmw/preview.__large_preview.png",
+      "tags": [
+        "new",
+        "theme",
+        "webapp",
+        "master"
+      ],
+      "updatedAt": "2025-04-19T22:51:23.090Z",
+      "createdAt": "2025-04-19T22:51:23.090Z",
+      "id": 4
+    },
+    {
+      "title": "Moderne webapp 5",
+      "description": "5 Modern IT solutions template designed to the needs of businesses, startups, and tech companies. Built with the latest Bootstrap framework, it offers a fully responsive and user-friendly layout, ensuring a seamless experience across all devices.",
+      "imageUrl": "https://storage.googleapis.com/media-data-web-glob/product-by-category-img/zmw/preview.__large_preview.png",
+      "tags": [
+        "new",
+        "theme",
+        "webapp",
+        "lecom"
+      ],
+      "updatedAt": "2025-04-20T22:51:23.090Z",
+      "createdAt": "2025-04-20T22:51:23.090Z",
+      "id": 5
+    },
+    {
+      "title": "Moderne webapp 6",
+      "description": "6 Modern IT solutions template designed to the needs of businesses, startups, and tech companies. Built with the latest Bootstrap framework, it offers a fully responsive and user-friendly layout, ensuring a seamless experience across all devices.",
+      "imageUrl": "https://storage.googleapis.com/media-data-web-glob/product-by-category-img/zmw/preview.__large_preview.png",
+      "tags": [
+        "new",
+        "theme",
+        "webapp",
+        "sturen"
+      ],
+      "updatedAt": "2025-04-21T22:51:23.090Z",
+      "createdAt": "2025-04-21T22:51:23.090Z",
+      "id": 6
+    },
+    {
+      "title": "Moderne webapp 7",
+      "description": "7 Modern IT solutions template designed to the needs of businesses, startups, and tech companies. Built with the latest Bootstrap framework, it offers a fully responsive and user-friendly layout, ensuring a seamless experience across all devices.",
+      "imageUrl": "https://storage.googleapis.com/media-data-web-glob/product-by-category-img/zmw/preview.__large_preview.png",
+      "tags": [
+        "new",
+        "theme",
+        "webapp",
+        "kenton"
+      ],
+      "updatedAt": "2025-04-22T22:51:23.090Z",
+      "createdAt": "2025-04-22T22:51:23.090Z",
+      "id": 7
+    },
+    {
+      "title": "Moderne webapp 8",
+      "description": "8 Modern IT solutions template designed to the needs of businesses, startups, and tech companies. Built with the latest Bootstrap framework, it offers a fully responsive and user-friendly layout, ensuring a seamless experience across all devices.",
+      "imageUrl": "https://storage.googleapis.com/media-data-web-glob/product-by-category-img/zmw/preview.__large_preview.png",
+      "tags": [
+        "new",
+        "theme",
+        "webapp",
+        "realo"
+      ],
+      "updatedAt": "2025-04-24T22:51:23.090Z",
+      "createdAt": "2025-04-24T22:51:23.090Z",
+      "id": 8
+    }
+  ],
+  "comments": [],
+  "likes": [],
+  "products": [
+    {
+      "imageUrl": "https://storage.googleapis.com/media-data-web-glob/product-by-category-img/zmw/preview.__large_preview.png",
+      "title": "000 IT Solutions & latest Bootstrap HTML",
+      "description": "Modern IT solutions template designed to the needs of businesses, startups, and tech companies. Built with the latest Bootstrap framework, it offers a fully responsive and user-friendly layout, ensuring a seamless experience across all devices.",
+      "price": 456,
+      "buyUrl": "https://buy.stripe.com/7sI29xcny90s51KfYY",
+      "addToCard": "price_1RAbP5AliYCIqTL0yk4lBWA59",
+      "detailUrl": "https://storage.googleapis.com/bucket-zero-media/0/image_listing/it6e67.png",
+      "updatedAt": "2025-04-23T22:28:47.979Z",
+      "createdAt": "2025-04-23T22:28:47.979Z",
+      "id": 1
+    },
+    {
+      "imageUrl": "https://storage.googleapis.com/media-data-web-glob/product-by-category-img/zmw/preview.__large_preview.png",
+      "title": "2 IT Solutions & latest Bootstrap HTML",
+      "description": "Modern IT solutions template designed to the needs of businesses, startups, and tech companies. Built with the latest Bootstrap framework, it offers a fully responsive and user-friendly layout, ensuring a seamless experience across all devices.",
+      "price": 336,
+      "buyUrl": "https://buy.stripe.com/7sI29xcny90s51KfYY",
+      "addToCard": "price_1RAbP5AliYCIqTL0yk4lBWA59",
+      "detailUrl": "https://storage.googleapis.com/bucket-zero-media/0/image_listing/it6e67.png",
+      "updatedAt": "2025-04-23T22:28:47.979Z",
+      "createdAt": "2025-04-23T22:28:47.979Z",
+      "id": 2
+    },
+    {
+      "imageUrl": "https://storage.googleapis.com/media-data-web-glob/product-by-category-img/zmw/preview.__large_preview.png",
+      "title": "3 IT Solutions & latest Bootstrap HTML",
+      "description": "Modern IT solutions template designed to the needs of businesses, startups, and tech companies. Built with the latest Bootstrap framework, it offers a fully responsive and user-friendly layout, ensuring a seamless experience across all devices.",
+      "price": 129,
+      "buyUrl": "https://buy.stripe.com/7sI29xcny90s51KfYY",
+      "addToCard": "price_1RAbP5AliYCIqTL0yk4lBWA59",
+      "detailUrl": "https://storage.googleapis.com/bucket-zero-media/0/image_listing/it6e67.png",
+      "updatedAt": "2025-04-23T22:28:47.979Z",
+      "createdAt": "2025-04-23T22:28:47.979Z",
+      "id": 3
+    }
+  ],
+  "users": [
+    {
+      "name": "admin90",
+      "id": 2324,
+      "email": "admin90@gmail.com",
+      "password": "admin90",
+      "role": "admin",
+      "createdAt": "2025-04-23T21:58:03.566Z"
+    },
+    {
+      "name": "User1",
+      "id": 2325,
+      "email": "user1@gmail.com",
+      "password": "12$Xf8n3NlSGizGTkrZwn2ep5$764c192440f1febb93cae4c389496212a6f231c23287ac3df99f70df061e9e07",
+      "role": "user",
+      "createdAt": "2025-04-23T22:54:56.036Z"
+    }
+  ]
+}

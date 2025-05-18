@@ -1,7 +1,7 @@
 // IndexedDB configuration
 const DB_NAME = 'WebAppMarketDB';
 const DB_VERSION = 1;
-const SYNC_FILE_PATH = '/sync/WebAppMarketDB.json';
+const SYNC_FILE_PATH = '/sync-github/sync/WebAppMarketDB.json';
 
 // Store configurations
 const STORES = [

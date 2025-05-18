@@ -1,0 +1,75 @@
+
+
+<script>
+const apiUrl = "https://api.mongodb.wromo.net";
+const collection = "test_data";
+const token = "Bearer YOUR_TOKEN";
+
+const payload = {
+  name: "Test User",
+  address: "Test Address",
+  country: "Test Country",
+  source: "custom-html",
+  timestamp: new Date().toISOString()
+};
+
+fetch(`${apiUrl}/insert/${collection}`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": token
+  },
+  body: JSON.stringify(payload)
+})
+.then(res => res.json())
+.then(console.log)
+.catch(console.error);
+</script>
+
+
+
+
+
+// Test CORS
+            testCorsBtn.addEventListener('click', async () => {
+                try {
+                    showLoading();
+                    
+                    const apiUrl = apiUrlInput.value.trim();
+                    
+                    // Make API request to debug CORS endpoint
+                    const response = await fetch(`${apiUrl}/api/debug/cors`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const responseData = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(responseData.error || 'CORS test failed');
+                    }
+                    
+                    showResult({
+                        success: true,
+                        message: 'CORS test successful',
+                        response: responseData
+                    });
+                } catch (error) {
+                    console.error('CORS test error:', error);
+                    showResult({
+                        success: false,
+                        error: error.message || 'CORS test failed'
+                    }, true);
+                } finally {
+                    hideLoading();
+                }
+            });
+            
+            // Initialize with current timestamp
+            updateTimestamp();
+        });
+    </script>
+</body>
+</html>

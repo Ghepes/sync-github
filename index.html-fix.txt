@@ -1,0 +1,82 @@
+// Find this code in the ApiModule (around line 587):
+
+const login = async (credentials) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(credentials)
+        });
+
+        // PROBLEM: You're parsing the response twice
+        const result = await response.json(); // adăugat pentru debug
+        console.log('Server response:', result); // debug important
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Login failed');
+        }
+        
+        const data = await response.json();
+        setAuthToken(data.token);
+        return data;
+    } catch (error) {
+        console.error('Login error:', error);
+        throw error;
+    }
+};
+
+// REPLACE WITH:
+
+const login = async (credentials) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(credentials)
+        });
+
+        const data = await response.json();
+        console.log('Server response:', data); // debug important
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Login failed');
+        }
+        
+        setAuthToken(data.token);
+        return data;
+    } catch (error) {
+        console.error('Login error:', error);
+        throw error;
+    }
+};
+
+// Similarly, update the register function:
+
+const register = async (userData) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        });
+        
+        const data = await response.json();
+        console.log('Server registration response:', data); // debug important
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Registration failed');
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Registration error:', error);
+        throw error;
+    }
+};

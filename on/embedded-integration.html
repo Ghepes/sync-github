@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satellite Search - Embedded Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    
+    header {
+      margin-bottom: 40px;
+    }
+    
+    h1 {
+      color: #333;
+    }
+    
+    .content {
+      margin-top: 40px;
+    }
+    
+    footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      text-align: center;
+      color: #666;
+    }
+    
+    .note {
+      background-color: #f8f9fa;
+      border-left: 4px solid #3b82f6;
+      padding: 15px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>My Website</h1>
+    <p>This is an example of how to embed Satellite Search in any website.</p>
+  </header>
+  
+  <!-- Satellite Search Container -->
+  <div id="satellite-search"></div>
+  
+  <div class="content">
+    <h2>About This Example</h2>
+    <p>
+      This example demonstrates how to embed the Satellite Search functionality in any HTML website.
+      The search is powered by a decoupled backend that uses Google Programmable Search Engine (CSE).
+    </p>
+    
+    <div class="note">
+      <h3>Note About Embedded Mode</h3>
+      <p>
+        Some websites (like AliExpress, Amazon, etc.) prevent being displayed in iframes for security reasons.
+        When you click on these results, you'll see an option to open them in a new tab instead.
+      </p>
+      <p>
+        If you prefer to always open results in a new tab, you can set <code>displayMode: "redirect"</code> 
+        in the configuration.
+      </p>
+    </div>
+    
+    <p>
+      <strong>Important:</strong> Before using this example, make sure to update the <code>apiUrl</code> 
+      in the satellite-search.js file to point to your deployed API.
+    </p>
+  </div>
+  
+  <footer>
+    <p>&copy; 2023 Satellite Search Example</p>
+  </footer>
+  
+  <!-- Include the Satellite Search script -->
+  <script src="satellite-search.js"></script>
+  <script>
+    // You can also configure the search here if you prefer
+    document.addEventListener("DOMContentLoaded", () => {
+      // Uncomment and modify this if you want to override the default config
+      // window.satelliteSearchConfig = {
+      //   apiUrl: "https://search.wromo.com/api",
+      //   displayMode: "redirect" // Use this if you prefer to always open in new tabs
+      // };
+    });
+  </script>
+</body>
+</html>

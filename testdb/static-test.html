@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB API Static Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f9fafb;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            color: #2563eb;
+            margin-top: 0;
+        }
+        .info-box {
+            background-color: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        textarea {
+            min-height: 120px;
+            font-family: monospace;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .save-btn {
+            background-color: #2563eb;
+            color: white;
+        }
+        .save-btn:hover {
+            background-color: #1d4ed8;
+        }
+        .test-btn {
+            background-color: #10b981;
+            color: white;
+        }
+        .test-btn:hover {
+            background-color: #059669;
+        }
+        .result {
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 16px;
+            margin-top: 20px;
+            display: none;
+        }
+        .result.success {
+            background-color: #ecfdf5;
+            border-color: #10b981;
+        }
+        .result.error {
+            background-color: #fef2f2;
+            border-color: #ef4444;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+        <h1>MongoDB API Static Test</h1>
+        
+        <div class="info-box">
+            <p>This static HTML page demonstrates how to connect to your MongoDB API from any domain. Save this file and open it in your browser to test.</p>
+        </div>
+        
+        <div>
+            <label for="api-url">API URL</label>
+            <input type="text" id="api-url" value="https://api.mongodb.wromo.net" />
+            
+            <label for="auth-token">Auth Token (Optional)</label>
+            <input type="text" id="auth-token" placeholder="Bearer token for authenticated requests" />
+            
+            <label for="collection-name">Collection Name</label>
+            <input type="text" id="collection-name" value="test_data" />
+            
+            <label for="data-input">Data to Insert (JSON)</label>
+            <textarea id="data-input">{
+  "name": "Test User",
+  "address": "Test Address",
+  "country": "Test Country",
+  "source": "static-html-test",
+  "timestamp": "2023-05-06T12:34:56Z"
+}</textarea>
+            
+            <div class="button-group">
+                <button id="save-btn" class="save-btn">Save to MongoDB</button>
+                <button id="test-cors-btn" class="test-btn">Test CORS</button>
+            </div>
+        </div>
+        
+        <div id="result-container" class="result">
+            <h3>Result:</h3>
+            <pre id="result"></pre>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const saveBtn = document.getElementById('save-btn');
+            const testCorsBtn = document.getElementById('test-cors-btn');
+            const apiUrlInput = document.getElementById('api-url');
+            const authTokenInput = document.getElementById('auth-token');
+            const collectionNameInput = document.getElementById('collection-name');
+            const dataInput = document.getElementById('data-input');
+            const resultContainer = document.getElementById('result-container');
+            const resultDisplay = document.getElementById('result');
+            const loadingIndicator = document.getElementById('loading');
+            
+            // Show/hide loading indicator
+            const showLoading = () => {
+                loadingIndicator.style.display = 'flex';
+            };
+            
+            const hideLoading = () => {
+                loadingIndicator.style.display = 'none';
+            };
+            
+            // Display result
+            const showResult = (data, isError = false) => {
+                resultContainer.style.display = 'block';
+                resultContainer.className = isError ? 'result error' : 'result success';
+                
+                if (typeof data === 'object') {
+                    resultDisplay.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    resultDisplay.textContent = data;
+                }
+            };
+            
+            // Update timestamp in data
+            const updateTimestamp = () => {
+                try {
+                    const data = JSON.parse(dataInput.value);
+                    data.timestamp = new Date().toISOString();
+                    dataInput.value = JSON.stringify(data, null, 2);
+                } catch (error) {
+                    console.error('Error updating timestamp:', error);
+                }
+            };
+            
+            // Save data to MongoDB
+            saveBtn.addEventListener('click', async () => {
+                try {
+                    showLoading();
+                    updateTimestamp();
+                    
+                    const apiUrl = apiUrlInput.value.trim();
+                    const authToken = authTokenInput.value.trim();
+                    const collectionName = collectionNameInput.value.trim();
+                    
+                    // Parse data input
+                    let data;
+                    try {
+                        data = JSON.parse(dataInput.value);
+                    } catch (error) {
+                        throw new Error('Invalid JSON data. Please check your input.');
+                    }
+                    
+                    // Add origin information
+                    data.origin = window.location.origin || 'static-file';
+                    data.userAgent = navigator.userAgent;
+                    data.staticTest = true;
+                    
+                    // Prepare headers
+                    const headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    
+                    if (authToken) {
+                        headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+                    }
+                    
+                    // Make API request
+                    const response = await fetch(`${apiUrl}/api/test-data/insert`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                            collection: collectionName,
+                            document: data
+                        })
+                    });
+                    
+                    const responseData = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(responseData.error || 'Failed to save data');
+                    }
+                    
+                    showResult({
+                        success: true,
+                        message: 'Data saved successfully',
+                        response: responseData
+                    });
+                } catch (error) {
+                    console.error('Save error:', error);
+                    showResult({
+                        success: false,
+                        error: error.message || 'An unexpected error occurred'
+                    }, true);
+                } finally {
+                    hideLoading();
+                }
+            });
+            
+            // Test CORS
+            testCorsBtn.addEventListener('click', async () => {
+                try {
+                    showLoading();
+                    
+                    const apiUrl = apiUrlInput.value.trim();
+                    
+                    // Make API request to debug CORS endpoint
+                    const response = await fetch(`${apiUrl}/api/debug/cors`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const responseData = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(responseData.error || 'CORS test failed');
+                    }
+                    
+                    showResult({
+                        success: true,
+                        message: 'CORS test successful',
+                        response: responseData
+                    });
+                } catch (error) {
+                    console.error('CORS test error:', error);
+                    showResult({
+                        success: false,
+                        error: error.message || 'CORS test failed'
+                    }, true);
+                } finally {
+                    hideLoading();
+                }
+            });
+            
+            // Initialize with current timestamp
+            updateTimestamp();
+        });
+    </script>
+</body>
+</html>

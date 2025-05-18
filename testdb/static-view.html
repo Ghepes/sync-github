@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB Test Data Viewer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f9fafb;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            color: #2563eb;
+            margin-top: 0;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #374151;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .refresh-btn {
+            background-color: #2563eb;
+            color: white;
+        }
+        .refresh-btn:hover {
+            background-color: #1d4ed8;
+        }
+        .sort-btn {
+            background-color: #f3f4f6;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .sort-btn:hover {
+            background-color: #e5e7eb;
+        }
+        .sort-icon {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+        }
+        .sort-icon.asc {
+            transform: rotate(180deg);
+        }
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+        }
+        .pagination button {
+            background-color: white;
+            border: 1px solid #d1d5db;
+            color: #374151;
+        }
+        .pagination button:hover:not(:disabled) {
+            background-color: #f9fafb;
+        }
+        .pagination button:disabled {
+            background-color: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .error {
+            background-color: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            color: #b91c1c;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 48px 0;
+        }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            background-color: #f9fafb;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        td {
+            padding: 12px 16px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 14px;
+        }
+        tr:hover {
+            background-color: #f9fafb;
+        }
+        .empty-state {
+            background-color: #f9fafb;
+            border-radius: 4px;
+            padding: 32px;
+            text-align: center;
+            color: #6b7280;
+        }
+        .details {
+            display: none;
+            margin-top: 8px;
+            padding: 16px;
+            background-color: #f9fafb;
+            border-radius: 4px;
+        }
+        .details h3 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #111827;
+        }
+        pre {
+            background-color: white;
+            padding: 16px;
+            border-radius: 4px;
+            overflow: auto;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .meta {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-blue {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+        }
+        .badge-green {
+            background-color: #ecfdf5;
+            color: #047857;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MongoDB Test Data Viewer</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="api-url">API URL</label>
+                <input type="text" id="api-url" value="https://api.mongodb.wromo.net" />
+            </div>
+            
+            <div class="control-group">
+                <label for="collection">Collection</label>
+                <input type="text" id="collection" value="test_data" />
+            </div>
+            
+            <div class="control-group" style="flex: 0; align-self: flex-end;">
+                <button id="refresh-btn" class="refresh-btn">Refresh Data</button>
+            </div>
+        </div>
+        
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div id="pagination-info" class="meta">Loading...</div>
+            
+            <button id="sort-btn" class="sort-btn">
+                Sort: <span id="sort-label">Newest First</span>
+                <svg id="sort-icon" class="sort-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+        </div>
+        
+        <div id="data-container" style="display: none;">
+            <div id="empty-state" class="empty-state" style="display: none;">
+                No data found in this collection.
+            </div>
+            
+            <table id="data-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Source</th>
+                        <th>Origin</th>
+                        <th>Timestamp</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="data-body"></tbody>
+            </table>
+            
+            <div id="details-container"></div>
+            
+            <div class="pagination">
+                <button id="prev-btn" disabled>Previous</button>
+                <button id="next-btn" disabled>Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const apiUrlInput = document.getElementById('api-url');
+            const collectionInput = document.getElementById('collection');
+            const refreshBtn = document.getElementById('refresh-btn');
+            const sortBtn = document.getElementById('sort-btn');
+            const sortLabel = document.getElementById('sort-label');
+            const sortIcon = document.getElementById('sort-icon');
+            const errorEl = document.getElementById('error');
+            const loadingEl = document.getElementById('loading');
+            const dataContainerEl = document.getElementById('data-container');
+            const emptyStateEl = document.getElementById('empty-state');
+            const dataTableEl = document.getElementById('data-table');
+            const dataBodyEl = document.getElementById('data-body');
+            const detailsContainerEl = document.getElementById('details-container');
+            const paginationInfoEl = document.getElementById('pagination-info');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            
+            // State
+            let data = [];
+            let pagination = {
+                total: 0,
+                limit: 20,
+                skip: 0,
+                hasMore: false
+            };
+            let sortOrder = 'desc';
+            
+            // Fetch data
+            async function fetchData() {
+                try {
+                    showLoading();
+                    hideError();
+                    
+                    const apiUrl = apiUrlInput.value.trim();
+                    const collection = collectionInput.value.trim();
+                    
+                    const url = new URL(`${apiUrl}/api/test-data/list`);
+                    url.searchParams.append('collection', collection);
+                    url.searchParams.append('limit', pagination.limit.toString());
+                    url.searchParams.append('skip', pagination.skip.toString());
+                    url.searchParams.append('sort', sortOrder);
+                    
+                    const response = await fetch(url.toString());
+                    const result = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Failed to fetch data');
+                    }
+                    
+                    data = result.data;
+                    pagination = result.pagination;
+                    
+                    renderData();
+                    updatePaginationInfo();
+                    updatePaginationButtons();
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                    showError(error.message || 'An error occurred while fetching data');
+                    hideData();
+                } finally {
+                    hideLoading();
+                }
+            }
+            
+            // Render data
+            function renderData() {
+                if (data.length === 0) {
+                    showEmptyState();
+                    return;
+                }
+                
+                hideEmptyState();
+                showTable();
+                
+                // Clear previous data
+                dataBodyEl.innerHTML = '';
+                detailsContainerEl.innerHTML = '';
+                
+                // Render rows
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    
+                    // Format date
+                    const timestamp = item._metadata?.insertedAt || item.timestamp;
+                    const date = new Date(timestamp);
+                    const formattedDate = date.toLocaleString();
+                    const timeAgo = getTimeAgo(date);
+                    
+                    row.innerHTML = `
+                        <td>
+                            <div>${item.name || 'N/A'}</div>
+                            <div class="meta">${item.country || 'N/A'}</div>
+                        </td>
+                        <td>
+                            <div>${item.source || 'N/A'}</div>
+                            <div class="meta">
+                                <span class="badge ${item.staticTest ? 'badge-green' : 'badge-blue'}">
+                                    ${item.staticTest ? 'Static Test' : 'API Test'}
+                                </span>
+                            </div>
+                        </td>
+                        <td>${item.origin || 'N/A'}</td>
+                        <td>
+                            <div>${formattedDate}</div>
+                            <div class="meta">${timeAgo}</div>
+                        </td>
+                        <td>
+                            <button class="view-details-btn" data-id="${item._id}">View Details</button>
+                        </td>
+                    `;
+                    
+                    dataBodyEl.appendChild(row);
+                    
+                    // Create details section
+                    const detailsEl = document.createElement('div');
+                    detailsEl.id = `details-${item._id}`;
+                    detailsEl.className = 'details';
+                    detailsEl.innerHTML = `
+                        <h3>Details for ${item.name || 'Item'}</h3>
+                        <pre>${JSON.stringify(item, null, 2)}</pre>
+                    `;
+                    
+                    detailsContainerEl.appendChild(detailsEl);
+                });
+                
+                // Add event listeners to view details buttons
+                document.querySelectorAll('.view-details-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const id = btn.getAttribute('data-id');
+                        const detailsEl = document.getElementById(`details-${id}`);
+                        
+                        // Hide all other details
+                        document.querySelectorAll('.details').forEach(el => {
+                            if (el.id !== `details-${id}`) {
+                                el.style.display = 'none';
+                            }
+                        });
+                        
+                        // Toggle this detail
+                        detailsEl.style.display = detailsEl.style.display === 'block' ? 'none' : 'block';
+                    });
+                });
+            }
+            
+            // Update pagination info
+            function updatePaginationInfo() {
+                const start = pagination.total === 0 ? 0 : pagination.skip + 1;
+                const end = Math.min(pagination.skip + data.length, pagination.total);
+                paginationInfoEl.textContent = `Showing ${start} to ${end} of ${pagination.total} entries`;
+            }
+            
+            // Update pagination buttons
+            function updatePaginationButtons() {
+                prevBtn.disabled = pagination.skip === 0;
+                nextBtn.disabled = !pagination.hasMore;
+            }
+            
+            // Get time ago string
+            function getTimeAgo(date) {
+                const now = new Date();
+                const seconds = Math.floor((now - date) / 1000);
+                
+                let interval = Math.floor(seconds / 31536000);
+                if (interval > 1) return interval + ' years ago';
+                if (interval === 1) return 'a year ago';
+                
+                interval = Math.floor(seconds / 2592000);
+                if (interval > 1) return interval + ' months ago';
+                if (interval === 1) return 'a month ago';
+                
+                interval = Math.floor(seconds / 86400);
+                if (interval > 1) return interval + ' days ago';
+                if (interval === 1) return 'a day ago';
+                
+                interval = Math.floor(seconds / 3600);
+                if (interval > 1) return interval + ' hours ago';
+                if (interval === 1) return 'an hour ago';
+                
+                interval = Math.floor(seconds / 60);
+                if (interval > 1) return interval + ' minutes ago';
+                if (interval === 1) return 'a minute ago';
+                
+                return 'just now';
+            }
+            
+            // UI helpers
+            function showLoading() {
+                loadingEl.style.display = 'flex';
+                dataContainerEl.style.display = 'none';
+            }
+            
+            function hideLoading() {
+                loadingEl.style.display = 'none';
+                dataContainerEl.style.display = 'block';
+            }
+            
+            function showError(message) {
+                errorEl.textContent = message;
+                errorEl.style.display = 'block';
+            }
+            
+            function hideError() {
+                errorEl.style.display = 'none';
+            }
+            
+            function showEmptyState() {
+                emptyStateEl.style.display = 'block';
+                dataTableEl.style.display = 'none';
+            }
+            
+            function hideEmptyState() {
+                emptyStateEl.style.display = 'none';
+            }
+            
+            function showTable() {
+                dataTableEl.style.display = 'table';
+            }
+            
+            function hideData() {
+                dataContainerEl.style.display = 'none';
+            }
+            
+            // Event listeners
+            refreshBtn.addEventListener('click', fetchData);
+            
+            sortBtn.addEventListener('click', () => {
+                sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+                sortLabel.textContent = sortOrder === 'desc' ? 'Newest First' : 'Oldest First';
+                sortIcon.classList.toggle('asc', sortOrder === 'asc');
+                fetchData();
+            });
+            
+            prevBtn.addEventListener('click', () => {
+                if (pagination.skip > 0) {
+                    pagination.skip = Math.max(0, pagination.skip - pagination.limit);
+                    fetchData();
+                }
+            });
+            
+            nextBtn.addEventListener('click', () => {
+                if (pagination.hasMore) {
+                    pagination.skip = pagination.skip + pagination.limit;
+                    fetchData();
+                }
+            });
+            
+            // Initial fetch
+            fetchData();
+        });
+    </script>
+</body>
+</html>

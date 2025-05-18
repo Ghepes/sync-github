@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universal Satellite Search Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    
+    header {
+      margin-bottom: 40px;
+    }
+    
+    h1 {
+      color: #333;
+    }
+    
+    .content {
+      margin-top: 40px;
+    }
+    
+    footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      text-align: center;
+      color: #666;
+    }
+    
+    .instructions {
+      background-color: #f8f9fa;
+      border-left: 4px solid #4f46e5;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    
+    code {
+      background-color: #f1f1f1;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Universal Satellite Search</h1>
+    <p>This example demonstrates how to embed the Satellite Search in any website, with CORS-free operation.</p>
+  </header>
+  
+  <!-- Satellite Search Container -->
+  <div id="satellite-search"></div>
+  
+  <div class="content">
+    <h2>How to Use This Integration</h2>
+    
+    <div class="instructions">
+      <h3>Step 1: Add the container to your HTML</h3>
+      <code>&lt;div id="satellite-search"&gt;&lt;/div&gt;</code>
+    </div>
+    
+    <div class="instructions">
+      <h3>Step 2: Include the script</h3>
+      <code>&lt;script src="universal-search.js"&gt;&lt;/script&gt;</code>
+      <p>Or you can include it directly from your CDN:</p>
+      <code>&lt;script src="https://search.wromo.com/examples/universal-search.js"&gt;&lt;/script&gt;</code>
+    </div>
+    
+    <div class="instructions">
+      <h3>Step 3: Configure (optional)</h3>
+      <p>You can customize the search by adding this before the script:</p>
+      <pre><code>&lt;script&gt;
+  window.satelliteSearchConfig = {
+    apiUrl: "https://search.wromo.com/api",
+    displayMode: "redirect"
+  };
+&lt;/script&gt;</code></pre>
+    </div>
+    
+    <h2>Why This Works Everywhere</h2>
+    <p>
+      This integration uses multiple techniques to fetch data:
+    </p>
+    <ol>
+      <li><strong>JSONP</strong> - Works across domains without CORS issues</li>
+      <li><strong>Standard CORS</strong> - Used as a fallback if JSONP fails</li>
+      <li><strong>CORS Proxy</strong> - Used as a last resort if both methods fail</li>
+    </ol>
+    <p>
+      It also includes better error handling and fallbacks to ensure a good user experience
+      even when network issues occur.
+    </p>
+  </div>
+  
+  <footer>
+    <p>&copy; 2023 Satellite Search Example</p>
+  </footer>
+  
+  <!-- Include the Satellite Search script -->
+  <script>
+    // Optional configuration
+    window.satelliteSearchConfig = {
+      apiUrl: "https://search.wromo.com/api",
+      displayMode: "redirect"
+    };
+  </script>
+  <script src="universal-search.js"></script>
+</body>
+</html>

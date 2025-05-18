@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satellite Search - Integration Examples</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    
+    header {
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    
+    h1 {
+      color: #333;
+    }
+    
+    .examples-container {
+      display: flex;
+      gap: 30px;
+      margin: 40px 0;
+    }
+    
+    @media (max-width: 768px) {
+      .examples-container {
+        flex-direction: column;
+      }
+    }
+    
+    .example-card {
+      flex: 1;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .example-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .example-card-header {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .example-card-header h2 {
+      margin: 0;
+      color: #333;
+    }
+    
+    .example-card-content {
+      padding: 20px;
+    }
+    
+    .example-card-footer {
+      padding: 15px 20px;
+      background-color: #f8f9fa;
+      border-top: 1px solid #eee;
+      text-align: center;
+    }
+    
+    .example-card-footer a {
+      display: inline-block;
+      padding: 8px 16px;
+      background-color: #3b82f6;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    
+    .example-card-footer a:hover {
+      background-color: #2563eb;
+    }
+    
+    .features-list {
+      padding-left: 20px;
+    }
+    
+    .features-list li {
+      margin-bottom: 8px;
+    }
+    
+    footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      text-align: center;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Satellite Search Integration Examples</h1>
+    <p>Choose an example to see different ways to integrate Satellite Search into your website</p>
+  </header>
+  
+  <div class="examples-container">
+    <div class="example-card">
+      <div class="example-card-header">
+        <h2>Embed Mode</h2>
+      </div>
+      <div class="example-card-content">
+        <p>This example demonstrates how to embed search results within your page using iframes.</p>
+        <h3>Features:</h3>
+        <ul class="features-list">
+          <li>Keeps users on your website</li>
+          <li>Displays content in a modal overlay</li>
+          <li>Gracefully falls back to new tabs for sites that block embedding</li>
+          <li>Provides a seamless user experience</li>
+        </ul>
+      </div>
+      <div class="example-card-footer">
+        <a href="embedded-integration.html">View Embed Example</a>
+      </div>
+    </div>
+    
+    <div class="example-card">
+      <div class="example-card-header">
+        <h2>Redirect Mode</h2>
+      </div>
+      <div class="example-card-content">
+        <p>This example demonstrates how to open search results in new tabs, which works with all websites.</p>
+        <h3>Features:</h3>
+        <ul class="features-list">
+          <li>Compatible with all websites, including those that block iframes</li>
+          <li>Simpler implementation with no iframe handling</li>
+          <li>Clear visual indication that links open in new tabs</li>
+          <li>Better for sites where most results come from iframe-blocking domains</li>
+        </ul>
+      </div>
+      <div class="example-card-footer">
+        <a href="redirect-integration.html">View Redirect Example</a>
+      </div>
+    </div>
+  </div>
+  
+  <div style="text-align: center; margin: 40px 0;">
+    <h2>Other Examples</h2>
+    <p>Check out these additional integration examples:</p>
+    <ul style="list-style: none; padding: 0;">
+      <li style="margin-bottom: 10px;"><a href="simple-integration.html">Simple Integration</a> - Basic implementation with vanilla JavaScript</li>
+      <li style="margin-bottom: 10px;"><a href="universal-integration.html">Universal Integration</a> - Works across domains with CORS handling</li>
+    </ul>
+  </div>
+  
+  <footer>
+    <p>&copy; 2023 Satellite Search Examples</p>
+    <p>
+      <small>Remember to update the <code>apiUrl</code> in the JavaScript files to point to your deployed API before using these examples.</small>
+    </p>
+  </footer>
+</body>
+</html>

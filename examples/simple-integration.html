@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satellite Search Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .search-container {
+      margin-bottom: 30px;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .suggestions {
+      position: absolute;
+      width: calc(100% - 40px);
+      max-width: 1160px;
+      background: white;
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 10;
+      display: none;
+    }
+    
+    .suggestion-item {
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+    
+    .suggestion-item:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .results-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    
+    .result-card {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    
+    .result-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .card-image {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      background-color: #f5f5f5;
+    }
+    
+    .card-content {
+      padding: 15px;
+    }
+    
+    .card-title {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .card-description {
+      margin: 0 0 15px 0;
+      font-size: 14px;
+      color: #666;
+      line-height: 1.4;
+    }
+    
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .card-price {
+      font-weight: 600;
+      color: #2e7d32;
+    }
+    
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    
+    .tag {
+      background-color: #f1f1f1;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      z-index: 100;
+      overflow: auto;
+    }
+    
+    .modal-content {
+      background-color: white;
+      margin: 50px auto;
+      padding: 20px;
+      width: 80%;
+      max-width: 800px;
+      border-radius: 8px;
+      position: relative;
+    }
+    
+    .close-modal {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    
+    .embed-container {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    
+    @media (max-width: 768px) {
+      .results-container {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      }
+      
+      .modal-content {
+        width: 95%;
+        margin: 20px auto;
+      }
+      
+      .embed-container {
+        height: 400px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Satellite Search</h1>
+  
+  <div class="search-container">
+    <input type="text" id="search-input" class="search-input" placeholder="Search for anything...">
+    <div id="suggestions" class="suggestions"></div>
+  </div>
+  
+  <div id="results-container" class="results-container"></div>
+  
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="close-modal">&times;</span>
+      <iframe id="embed-container" class="embed-container"></iframe>
+    </div>
+  </div>
+  
+  <script>
+    // Configuration
+    const API_URL = 'http://localhost:3000/api';
+    const DISPLAY_MODE = 'embed'; // 'redirect' or 'embed'
+    
+    // DOM Elements
+    const searchInput = document.getElementById('search-input');
+    const suggestionsContainer = document.getElementById('suggestions');
+    const resultsContainer = document.getElementById('results-container');
+    const modal = document.getElementById('modal');
+    const embedContainer = document.getElementById('embed-container');
+    const closeModal = document.getElementById('close-modal');
+    
+    // Debounce function to limit API calls
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+    
+    // Fetch suggestions as user types
+    const fetchSuggestions = debounce(async (query) => {
+      if (!query || query.length < 2) {
+        suggestionsContainer.style.display = 'none';
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_URL}/suggestions?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        if (data.success && data.suggestions.length > 0) {
+          renderSuggestions(data.suggestions);
+        } else {
+          suggestionsContainer.style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        suggestionsContainer.style.display = 'none';
+      }
+    }, 300);
+    
+    // Render suggestions
+    function renderSuggestions(suggestions) {
+      suggestionsContainer.innerHTML = '';
+      
+      suggestions.forEach(suggestion => {
+        const item = document.createElement('div');
+        item.className = 'suggestion-item';
+        item.textContent = suggestion;
+        item.addEventListener('click', () => {
+          searchInput.value = suggestion;
+          suggestionsContainer.style.display = 'none';
+          performSearch(suggestion);
+        });
+        
+        suggestionsContainer.appendChild(item);
+      });
+      
+      suggestionsContainer.style.display = 'block';
+    }
+    
+    // Perform search
+    async function performSearch(query) {
+      try {
+        resultsContainer.innerHTML = '<p>Searching...</p>';
+        
+        const response = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          renderResults(data.results);
+        } else {
+          resultsContainer.innerHTML = '<p>No results found</p>';
+        }
+      } catch (error) {
+        console.error('Error performing search:', error);
+        resultsContainer.innerHTML = '<p>An error occurred while searching</p>';
+      }
+    }
+    
+    // Render search results
+    function renderResults(results) {
+      if (!results || results.length === 0) {
+        resultsContainer.innerHTML = '<p>No results found</p>';
+        return;
+      }
+      
+      resultsContainer.innerHTML = '';
+      
+      results.forEach(result => {
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        card.addEventListener('click', () => handleCardClick(result));
+        
+        // Determine if we have an image
+        const imageUrl = result.image || 'https://via.placeholder.com/300x200?text=No+Image';
+        
+        // Create card HTML
+        card.innerHTML = `
+          <img src="${imageUrl}" alt="${result.title}" class="card-image" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
+          <div class="card-content">
+            <h3 class="card-title">${result.title}</h3>
+            <p class="card-description">${window.innerWidth <= 768 ? result.description.mobile : result.description.full}</p>
+            <div class="card-meta">
+              <div class="card-source">
+                <img src="${result.source.favicon}" alt="${result.source.name}" width="16" height="16">
+                <span>${result.source.name}</span>
+              </div>
+              ${result.price ? `<div class="card-price">${result.price}</div>` : ''}
+            </div>
+            ${result.tags && result.tags.length > 0 ? `
+              <div class="card-tags">
+                ${result.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `;
+        
+        resultsContainer.appendChild(card);
+      });
+    }
+    
+    // Handle card click based on display mode
+    function handleCardClick(result) {
+      if (DISPLAY_MODE === 'redirect') {
+        window.open(result.link, '_blank');
+      } else if (DISPLAY_MODE === 'embed') {
+        embedContainer.src = result.link;
+        modal.style.display = 'block';
+      }
+    }
+    
+    // Event Listeners
+    searchInput.addEventListener('input', (e) => fetchSuggestions(e.target.value));
+    
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        suggestionsContainer.style.display = 'none';
+        performSearch(e.target.value);
+      }
+    });
+    
+    // Close modal when clicking the X
+    closeModal.addEventListener('click', () => {
+      modal.style.display = 'none';
+      embedContainer.src = '';
+    });
+    
+    // Close modal when clicking outside of it
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        embedContainer.src = '';
+      }
+    });
+    
+    // Close suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+      if (e.target !== searchInput && e.target !== suggestionsContainer) {
+        suggestionsContainer.style.display = 'none';
+      }
+    });
+    
+    // Responsive description adjustment
+    window.addEventListener('resize', debounce(() => {
+      const cards = document.querySelectorAll('.result-card');
+      cards.forEach(card => {
+        const descriptionElement = card.querySelector('.card-description');
+        if (descriptionElement) {
+          const result = JSON.parse(card.dataset.result || '{}');
+          if (result.description) {
+            descriptionElement.textContent = window.innerWidth <= 768 ? 
+              result.description.mobile : 
+              result.description.full;
+          }
+        }
+      });
+    }, 200));
+  </script>
+</body>
+</html>

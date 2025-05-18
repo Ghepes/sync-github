@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+        }
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="auth-container" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+            <div class="flex justify-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Admin Portal</h2>
+            </div>
+            
+            <div class="mb-6">
+                <div class="flex border-b">
+                    <button id="login-tab" class="px-4 py-2 font-medium text-sm text-blue-600 border-b-2 border-blue-600">Login</button>
+                    <button id="register-tab" class="px-4 py-2 font-medium text-sm text-gray-500">Register</button>
+                </div>
+            </div>
+            
+            <div id="login-content" class="tab-content active">
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="login-email">Email</label>
+                        <input class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            id="login-email" type="email" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="login-password">Password</label>
+                        <input class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            id="login-password" type="password" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Login
+                    </button>
+                </form>
+            </div>
+            
+            <div id="register-content" class="tab-content">
+                <form id="register-form">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="register-name">Full Name</label>
+                        <input class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            id="register-name" type="text" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="register-email">Email</label>
+                        <input class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            id="register-email" type="email" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="register-password">Password</label>
+                        <input class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            id="register-password" type="password" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="register-country">Country</label>
+                        <input class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            id="register-country" type="text" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="register-address">Address</label>
+                        <input class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            id="register-address" type="text" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Register
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard-container" class="hidden">
+        <nav class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex">
+                        <div class="flex-shrink-0 flex items-center">
+                            <h1 class="text-xl font-bold text-gray-800">Admin Dashboard</h1>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <span id="admin-name-display" class="text-sm font-medium text-gray-700 mr-4"></span>
+                        <button id="logout-btn" class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="mb-8">
+                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div class="px-4 py-5 sm:px-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Admin Information</h3>
+                        <p class="mt-1 max-w-2xl text-sm text-gray-500">Personal details</p>
+                    </div>
+                    <div class="border-t border-gray-200">
+                        <dl>
+                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500">Full name</dt>
+                                <dd id="admin-info-name" class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"></dd>
+                            </div>
+                            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500">Admin ID</dt>
+                                <dd id="admin-info-id" class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"></dd>
+                            </div>
+                            <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500">Country</dt>
+                                <dd id="admin-info-country" class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"></dd>
+                            </div>
+                            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500">Address</dt>
+                                <dd id="admin-info-address" class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"></dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <div class="sm:hidden">
+                    <label for="tabs" class="sr-only">Select a tab</label>
+                    <select id="tabs" class="block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="products">Products</option>
+                        <option value="blog">Blog Posts</option>
+                    </select>
+                </div>
+                <div class="hidden sm:block">
+                    <div class="border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                            <button id="products-tab" class="border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                                Products
+                            </button>
+                            <button id="blog-tab" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                                Blog Posts
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <div id="products-content" class="tab-content active">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800">Products</h2>
+                    <button id="new-product-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Add New Product
+                    </button>
+                </div>
+
+                <div id="product-form" class="bg-white shadow overflow-hidden sm:rounded-lg mb-6 hidden">
+                    <div class="px-4 py-5 sm:px-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="product-form-title">Add New Product</h3>
+                    </div>
+                    <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
+                        <form id="product-form-element">
+                            <input type="hidden" id="product-id">
+                            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                <div class="sm:col-span-3">
+                                    <label for="product-title" class="block text-sm font-medium text-gray-700">Title</label>
+                                    <div class="mt-1">
+                                        <input type="text" id="product-title" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+
+                                <div class="sm:col-span-3">
+                                    <label for="product-price" class="block text-sm font-medium text-gray-700">Price Code</label>
+                                    <div class="mt-1">
+                                        <select id="product-price" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                            <option value="price_1RAbP5A10">$9.99</option>
+                                            <option value="price_2RAbP5A20">$19.99</option>
+                                            <option value="price_3RAbP5A30">$29.99</option>
+                                            <option value="price_4RAbP5A40">$49.99</option>
+                                            <option value="price_5RAbP5A50">$99.99</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="sm:col-span-6">
+                                    <label for="product-description" class="block text-sm font-medium text-gray-700">Description</label>
+                                    <div class="mt-1">
+                                        <textarea id="product-description" rows="3" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="sm:col-span-6">
+                                    <label for="product-image-main" class="block text-sm font-medium text-gray-700">Main Image URL</label>
+                                    <div class="mt-1">
+                                        <input type="text" id="product-image-main" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+
+                                <div class="sm:col-span-3">
+                                    <label for="product-image-2" class="block text-sm font-medium text-gray-700">Image 2 URL</label>
+                                    <div class="mt-1">
+                                        <input type="text" id="product-image-2" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+
+                                <div class="sm:col-span-3">
+                                    <label for="product-image-3" class="block text-sm font-medium text-gray-700">Image 3 URL</label>
+                                    <div class="mt-1">
+                                        <input type="text" id="product-image-3" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+
+                                <div class="sm:col-span-3">
+                                    <label for="product-buy-url" class="block text-sm font-medium text-gray-700">Buy Now URL</label>
+                                    <div class="mt-1">
+                                        <input type="text" id="product-buy-url" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+
+                                <div class="sm:col-span-3">
+                                    <label for="product-details-url" class="block text-sm font-medium text-gray-700">Detailed Description URL</label>
+                                    <div class="mt-1">
+                                        <input type="text" id="product-details-url" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 flex justify-end space-x-3">
+                                <button type="button" id="product-cancel-btn" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Save
+                                </button>
+                                <button type="button" id="product-list-online-btn" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    List Online
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="products-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Products will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="blog-content" class="tab-content">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800">Blog Posts</h2>
+                    <button id="new-blog-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Add New Blog Post
+                    </button>
+                </div>
+
+                <div id="blog-form" class="bg-white shadow overflow-hidden sm:rounded-lg mb-6 hidden">
+                    <div class="px-4 py-5 sm:px-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="blog-form-title">Add New Blog Post</h3>
+                    </div>
+                    <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
+                        <form id="blog-form-element">
+                            <input type="hidden" id="blog-id">
+                            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                                <div class="sm:col-span-6">
+                                    <label for="blog-title" class="block text-sm font-medium text-gray-700">Title</label>
+                                    <div class="mt-1">
+                                        <input type="text" id="blog-title" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+
+                                <div class="sm:col-span-6">
+                                    <label for="blog-description" class="block text-sm font-medium text-gray-700">Description</label>
+                                    <div class="mt-1">
+                                        <textarea id="blog-description" rows="3" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="sm:col-span-6">
+                                    <label for="blog-image" class="block text-sm font-medium text-gray-700">Image URL</label>
+                                    <div class="mt-1">
+                                        <input type="text" id="blog-image" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+
+                                <div class="sm:col-span-3">
+                                    <label for="blog-tags" class="block text-sm font-medium text-gray-700">Tags (comma separated)</label>
+                                    <div class="mt-1">
+                                        <input type="text" id="blog-tags" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+
+                                <div class="sm:col-span-3">
+                                    <label for="blog-embedded-url" class="block text-sm font-medium text-gray-700">Embedded URL</label>
+                                    <div class="mt-1">
+                                        <input type="text" id="blog-embedded-url" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 flex justify-end space-x-3">
+                                <button type="button" id="blog-cancel-btn" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Save
+                                </button>
+                                <button type="button" id="blog-list-online-btn" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    List Online
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="blog-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Blog posts will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // IndexedDB Storage Module
+        const StorageModule = (() => {
+            const DB_NAME = 'AdminDashboardDB';
+            const DB_VERSION = 1;
+            let db;
+
+            const init = () => {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(DB_NAME, DB_VERSION);
+                    
+                    request.onerror = (event) => {
+                        console.error('IndexedDB error:', event.target.error);
+                        reject('Error opening database');
+                    };
+                    
+                    request.onsuccess = (event) => {
+                        db = event.target.result;
+                        console.log('Database opened successfully');
+                        resolve();
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        
+                        // Create object stores
+                        if (!db.objectStoreNames.contains('adminInfo')) {
+                            db.createObjectStore('adminInfo', { keyPath: 'admin_id' });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('products')) {
+                            db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('blogPosts')) {
+                            db.createObjectStore('blogPosts', { keyPath: 'id', autoIncrement: true });
+                        }
+                    };
+                });
+            };
+
+            const saveAdminInfo = (adminInfo) => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['adminInfo'], 'readwrite');
+                    const store = transaction.objectStore('adminInfo');
+                    const request = store.put(adminInfo);
+                    
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            };
+
+            const getAdminInfo = (adminId) => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['adminInfo'], 'readonly');
+                    const store = transaction.objectStore('adminInfo');
+                    const request = store.get(adminId);
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            };
+
+            const saveProduct = (product) => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['products'], 'readwrite');
+                    const store = transaction.objectStore('products');
+                    const request = store.put(product);
+                    
+                    request.onsuccess = (event) => resolve(event.target.result);
+                    request.onerror = () => reject(request.error);
+                });
+            };
+
+            const getProducts = (adminId) => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['products'], 'readonly');
+                    const store = transaction.objectStore('products');
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => {
+                        const products = request.result.filter(product => product.admin_id === adminId);
+                        resolve(products);
+                    };
+                    request.onerror = () => reject(request.error);
+                });
+            };
+
+            const getProduct = (id) => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['products'], 'readonly');
+                    const store = transaction.objectStore('products');
+                    const request = store.get(id);
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            };
+
+            const deleteProduct = (id) => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['products'], 'readwrite');
+                    const store = transaction.objectStore('products');
+                    const request = store.delete(id);
+                    
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            };
+
+            const saveBlogPost = (blogPost) => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['blogPosts'], 'readwrite');
+                    const store = transaction.objectStore('blogPosts');
+                    const request = store.put(blogPost);
+                    
+                    request.onsuccess = (event) => resolve(event.target.result);
+                    request.onerror = () => reject(request.error);
+                });
+            };
+
+            const getBlogPosts = (adminId) => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['blogPosts'], 'readonly');
+                    const store = transaction.objectStore('blogPosts');
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => {
+                        const blogPosts = request.result.filter(post => post.admin_id === adminId);
+                        resolve(blogPosts);
+                    };
+                    request.onerror = () => reject(request.error);
+                });
+            };
+
+            const getBlogPost = (id) => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['blogPosts'], 'readonly');
+                    const store = transaction.objectStore('blogPosts');
+                    const request = store.get(id);
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            };
+
+            const deleteBlogPost = (id) => {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['blogPosts'], 'readwrite');
+                    const store = transaction.objectStore('blogPosts');
+                    const request = store.delete(id);
+                    
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            };
+
+            return {
+                init,
+                saveAdminInfo,
+                getAdminInfo,
+                saveProduct,
+                getProducts,
+                getProduct,
+                deleteProduct,
+                saveBlogPost,
+                getBlogPosts,
+                getBlogPost,
+                deleteBlogPost
+            };
+        })();
+
+        // API Module
+        const ApiModule = (() => {
+            const API_BASE_URL = 'https://api.mongodb.wromo.net';
+            
+            const getAuthToken = () => {
+                return localStorage.getItem('jwt_token');
+            };
+            
+            const setAuthToken = (token) => {
+                localStorage.setItem('jwt_token', token);
+            };
+            
+            const clearAuthToken = () => {
+                localStorage.removeItem('jwt_token');
+            };
+            const getAdminId = () => {
+                return localStorage.getItem('admin_id');
+            };
+            const setAdminId = (adminId) => {
+                localStorage.setItem('admin_id', adminId);
+            };
+            
+            const getAdminInfo = async (adminId) => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/admin/${adminId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${getAuthToken()}`
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to fetch admin info');
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('Get admin info error:', error);
+                    throw error;
+                }
+            };
+            const register = async (userData) => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+
+                        },
+                        body: JSON.stringify(userData)
+
+                    });
+
+
+
+                    
+                    if (!response.ok) {
+                        const data = await response.json();
+                        console.log('Server response:', data); // debug important
+
+//                        const errorData = await response.json();
+//                        throw new Error(errorData.message || 'Registration failed');
+                          throw new Error(data.error || 'Registration failed');
+                    }
+                    const data = await response.json();
+                    setAuthToken(data.token);
+                    console.log('Registration successful:', data); // debug important
+                    // Optionally, you can store the user data in IndexedDB
+                    // await StorageModule.saveAdminInfo(data);
+                    // Return the user data
+                    // to the caller
+                    
+//                    return await response.json();
+                     return data;
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    throw error;
+                }
+
+            };
+
+
+            
+            const login = async (credentials) => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(credentials)
+                    });
+
+                    console.log('Server response:', data); // debug important
+                    
+                    if (!response.ok) {
+ //                       const errorData = await response.json();
+ //                       throw new Error(errorData.message || 'Login failed');
+                          throw new Error(data.error || 'Login failed');
+                    }
+                    
+                    const data = await response.json();
+                    setAuthToken(data.token);
+                    return data;
+                } catch (error) {
+                    console.error('Login error:', error);
+                    throw error;
+                }
+            };
+            
+            const createProduct = async (productData) => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/product/create`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${getAuthToken()}`
+                        },
+                        body: JSON.stringify(productData)
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to create product');
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('Create product error:', error);
+                    throw error;
+                }
+            };
+            
+            const updateProduct = async (productId, productData) => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/product/update/${productId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${getAuthToken()}`
+                        },
+                        body: JSON.stringify(productData)
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to update product');
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('Update product error:', error);
+                    throw error;
+                }
+            };
+            
+            const deleteProduct = async (productId) => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/product/delete/${productId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${getAuthToken()}`
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to delete product');
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('Delete product error:', error);
+                    throw error;
+                }
+            };
+            
+            const createBlogPost = async (blogData) => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/blog/create`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${getAuthToken()}`
+                        },
+                        body: JSON.stringify(blogData)
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to create blog post');
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('Create blog post error:', error);
+                    throw error;
+                }
+            };
+            
+            const updateBlogPost = async (blogId, blogData) => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/blog/update/${blogId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${getAuthToken()}`
+                        },
+                        body: JSON.stringify(blogData)
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to update blog post');
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('Update blog post error:', error);
+                    throw error;
+                }
+            };
+            
+            const deleteBlogPost = async (blogId) => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/blog/delete/${blogId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${getAuthToken()}`
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to delete blog post');
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('Delete blog post error:', error);
+                    throw error;
+                }
+            };
+            
+            return {
+                register,
+                login,
+                getAuthToken,
+                setAuthToken,
+                clearAuthToken,
+                createProduct,
+                updateProduct,
+                deleteProduct,
+                createBlogPost,
+                updateBlogPost,
+                deleteBlogPost
+            };
+        })();
+
+        // UI Module
+        const UIModule = (() => {
+            // Auth UI elements
+            const authContainer = document.getElementById('auth-container');
+            const loginTab = document.getElementById('login-tab');
+            const registerTab = document.getElementById('register-tab');
+            const loginContent = document.getElementById('login-content');
+            const registerContent = document.getElementById('register-content');
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            
+            // Dashboard UI elements
+            const dashboardContainer = document.getElementById('dashboard-container');
+            const adminNameDisplay = document.getElementById('admin-name-display');
+            const adminInfoName = document.getElementById('admin-info-name');
+            const adminInfoId = document.getElementById('admin-info-id');
+            const adminInfoCountry = document.getElementById('admin-info-country');
+            const adminInfoAddress = document.getElementById('admin-info-address');
+            const logoutBtn = document.getElementById('logout-btn');
+            
+            // Products UI elements
+            const productsTab = document.getElementById('products-tab');
+            const blogTab = document.getElementById('blog-tab');
+            const productsContent = document.getElementById('products-content');
+            const blogContent = document.getElementById('blog-content');
+            const newProductBtn = document.getElementById('new-product-btn');
+            const productForm = document.getElementById('product-form');
+            const productFormElement = document.getElementById('product-form-element');
+            const productFormTitle = document.getElementById('product-form-title');
+            const productCancelBtn = document.getElementById('product-cancel-btn');
+            const productListOnlineBtn = document.getElementById('product-list-online-btn');
+            const productsTableBody = document.getElementById('products-table-body');
+            
+            // Blog UI elements
+            const newBlogBtn = document.getElementById('new-blog-btn');
+            const blogForm = document.getElementById('blog-form');
+            const blogFormElement = document.getElementById('blog-form-element');
+            const blogFormTitle = document.getElementById('blog-form-title');
+            const blogCancelBtn = document.getElementById('blog-cancel-btn');
+            const blogListOnlineBtn = document.getElementById('blog-list-online-btn');
+            const blogTableBody = document.getElementById('blog-table-body');
+            
+            // Loading indicator
+            const loadingIndicator = document.getElementById('loading');
+            
+            // Show/hide loading indicator
+            const showLoading = () => {
+                loadingIndicator.classList.remove('hidden');
+            };
+            
+            const hideLoading = () => {
+                loadingIndicator.classList.add('hidden');
+            };
+            
+            // Switch between auth tabs
+            const setupAuthTabs = () => {
+                loginTab.addEventListener('click', () => {
+                    loginTab.classList.add('text-blue-600', 'border-blue-600');
+                    loginTab.classList.remove('text-gray-500');
+                    registerTab.classList.remove('text-blue-600', 'border-blue-600');
+                    registerTab.classList.add('text-gray-500');
+                    loginContent.classList.add('active');
+                    registerContent.classList.remove('active');
+                });
+                
+                registerTab.addEventListener('click', () => {
+                    registerTab.classList.add('text-blue-600', 'border-blue-600');
+                    registerTab.classList.remove('text-gray-500');
+                    loginTab.classList.remove('text-blue-600', 'border-blue-600');
+                    loginTab.classList.add('text-gray-500');
+                    registerContent.classList.add('active');
+                    loginContent.classList.remove('active');
+                });
+            };
+            
+            // Switch between dashboard tabs
+            const setupDashboardTabs = () => {
+                productsTab.addEventListener('click', () => {
+                    productsTab.classList.add('border-blue-500', 'text-blue-600');
+                    productsTab.classList.remove('border-transparent', 'text-gray-500');
+                    blogTab.classList.remove('border-blue-500', 'text-blue-600');
+                    blogTab.classList.add('border-transparent', 'text-gray-500');
+                    productsContent.classList.add('active');
+                    blogContent.classList.remove('active');
+                });
+                
+                blogTab.addEventListener('click', () => {
+                    blogTab.classList.add('border-blue-500', 'text-blue-600');
+                    blogTab.classList.remove('border-transparent', 'text-gray-500');
+                    productsTab.classList.remove('border-blue-500', 'text-blue-600');
+                    productsTab.classList.add('border-transparent', 'text-gray-500');
+                    blogContent.classList.add('active');
+                    productsContent.classList.remove('active');
+                });
+            };
+            
+            // Show auth or dashboard based on authentication status
+            const showAuthOrDashboard = (isAuthenticated) => {
+                if (isAuthenticated) {
+                    authContainer.classList.add('hidden');
+                    dashboardContainer.classList.remove('hidden');
+                } else {
+                    dashboardContainer.classList.add('hidden');
+                    authContainer.classList.remove('hidden');
+                }
+            };
+            
+            // Update admin info display
+            const updateAdminInfoDisplay = (adminInfo) => {
+                adminNameDisplay.textContent = adminInfo.name;
+                adminInfoName.textContent = adminInfo.name;
+                adminInfoId.textContent = adminInfo.admin_id;
+                adminInfoCountry.textContent = adminInfo.country;
+                adminInfoAddress.textContent = adminInfo.address;
+            };
+            
+            // Show product form for adding or editing
+            const showProductForm = (isEditing = false, product = null) => {
+                productFormTitle.textContent = isEditing ? 'Edit Product' : 'Add New Product';
+                
+                if (isEditing && product) {
+                    document.getElementById('product-id').value = product.id;
+                    document.getElementById('product-title').value = product.title;
+                    document.getElementById('product-price').value = product.price_code;
+                    document.getElementById('product-description').value = product.description;
+                    document.getElementById('product-image-main').value = product.image_main_url;
+                    document.getElementById('product-image-2').value = product.image2_url;
+                    document.getElementById('product-image-3').value = product.image3_url;
+                    document.getElementById('product-buy-url').value = product.buy_now_url;
+                    document.getElementById('product-details-url').value = product.detailed_description_url;
+                    
+                    // Show list online button only if the product is not already online
+                    productListOnlineBtn.style.display = product.is_online ? 'none' : 'inline-flex';
+                } else {
+                    document.getElementById('product-id').value = '';
+                    document.getElementById('product-title').value = '';
+                    document.getElementById('product-price').value = 'price_1RAbP5A10';
+                    document.getElementById('product-description').value = '';
+                    document.getElementById('product-image-main').value = '';
+                    document.getElementById('product-image-2').value = '';
+                    document.getElementById('product-image-3').value = '';
+                    document.getElementById('product-buy-url').value = '';
+                    document.getElementById('product-details-url').value = '';
+                    
+                    // Always show list online button for new products
+                    productListOnlineBtn.style.display = 'inline-flex';
+                }
+                
+                productForm.classList.remove('hidden');
+            };
+            
+            // Hide product form
+            const hideProductForm = () => {
+                productForm.classList.add('hidden');
+            };
+            
+            // Show blog form for adding or editing
+            const showBlogForm = (isEditing = false, blogPost = null) => {
+                blogFormTitle.textContent = isEditing ? 'Edit Blog Post' : 'Add New Blog Post';
+                
+                if (isEditing && blogPost) {
+                    document.getElementById('blog-id').value = blogPost.id;
+                    document.getElementById('blog-title').value = blogPost.title;
+                    document.getElementById('blog-description').value = blogPost.description;
+                    document.getElementById('blog-image').value = blogPost.image_url;
+                    document.getElementById('blog-tags').value = blogPost.tags.join(', ');
+                    document.getElementById('blog-embedded-url').value = blogPost.embedded_url;
+                    
+                    // Show list online button only if the blog post is not already online
+                    blogListOnlineBtn.style.display = blogPost.is_online ? 'none' : 'inline-flex';
+                } else {
+                    document.getElementById('blog-id').value = '';
+                    document.getElementById('blog-title').value = '';
+                    document.getElementById('blog-description').value = '';
+                    document.getElementById('blog-image').value = '';
+                    document.getElementById('blog-tags').value = '';
+                    document.getElementById('blog-embedded-url').value = '';
+                    
+                    // Always show list online button for new blog posts
+                    blogListOnlineBtn.style.display = 'inline-flex';
+                }
+                
+                blogForm.classList.remove('hidden');
+            };
+            
+            // Hide blog form
+            const hideBlogForm = () => {
+                blogForm.classList.add('hidden');
+            };
+            
+            // Render products table
+            const renderProductsTable = (products) => {
+                productsTableBody.innerHTML = '';
+                
+                if (products.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                            No products found. Click "Add New Product" to create one.
+                        </td>
+                    `;
+                    productsTableBody.appendChild(row);
+                    return;
+                }
+                
+                products.forEach(product => {
+                    const row = document.createElement('tr');
+                    
+                    // Get price display from price code
+                    let priceDisplay = '$9.99';
+                    switch (product.price_code) {
+                        case 'price_2RAbP5A20': priceDisplay = '$19.99'; break;
+                        case 'price_3RAbP5A30': priceDisplay = '$29.99'; break;
+                        case 'price_4RAbP5A40': priceDisplay = '$49.99'; break;
+                        case 'price_5RAbP5A50': priceDisplay = '$99.99'; break;
+                    }
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <img class="h-10 w-10 rounded-full object-cover" src="${product.image_main_url || 'https://via.placeholder.com/40'}" alt="">
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">${product.title}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${priceDisplay}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.is_online ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                ${product.is_online ? 'Online' : 'Draft'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button class="text-blue-600 hover:text-blue-900 mr-3 edit-product" data-id="${product.id}">Edit</button>
+                            <button class="text-red-600 hover:text-red-900 delete-product" data-id="${product.id}">Delete</button>
+                        </td>
+                    `;
+                    
+                    productsTableBody.appendChild(row);
+                });
+                
+                // Add event listeners to edit and delete buttons
+                document.querySelectorAll('.edit-product').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const productId = parseInt(button.getAttribute('data-id'));
+                        const product = await StorageModule.getProduct(productId);
+                        showProductForm(true, product);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-product').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        if (confirm('Are you sure you want to delete this product?')) {
+                            const productId = parseInt(button.getAttribute('data-id'));
+                            await StorageModule.deleteProduct(productId);
+                            
+                            // Refresh products table
+                            const adminId = JSON.parse(localStorage.getItem('admin_info')).admin_id;
+                            const products = await StorageModule.getProducts(adminId);
+                            renderProductsTable(products);
+                        }
+                    });
+                });
+            };
+            
+            // Render blog posts table
+            const renderBlogTable = (blogPosts) => {
+                blogTableBody.innerHTML = '';
+                
+                if (blogPosts.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                            No blog posts found. Click "Add New Blog Post" to create one.
+                        </td>
+                    `;
+                    blogTableBody.appendChild(row);
+                    return;
+                }
+                
+                blogPosts.forEach(post => {
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <img class="h-10 w-10 rounded-full object-cover" src="${post.image_url || 'https://via.placeholder.com/40'}" alt="">
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">${post.title}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${post.tags.join(', ')}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${post.is_online ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                ${post.is_online ? 'Online' : 'Draft'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button class="text-blue-600 hover:text-blue-900 mr-3 edit-blog" data-id="${post.id}">Edit</button>
+                            <button class="text-red-600 hover:text-red-900 delete-blog" data-id="${post.id}">Delete</button>
+                        </td>
+                    `;
+                    
+                    blogTableBody.appendChild(row);
+                });
+                
+                // Add event listeners to edit and delete buttons
+                document.querySelectorAll('.edit-blog').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const blogId = parseInt(button.getAttribute('data-id'));
+                        const blogPost = await StorageModule.getBlogPost(blogId);
+                        showBlogForm(true, blogPost);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-blog').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        if (confirm('Are you sure you want to delete this blog post?')) {
+                            const blogId = parseInt(button.getAttribute('data-id'));
+                            await StorageModule.deleteBlogPost(blogId);
+                            
+                            // Refresh blog table
+                            const adminId = JSON.parse(localStorage.getItem('admin_info')).admin_id;
+                            const blogPosts = await StorageModule.getBlogPosts(adminId);
+                            renderBlogTable(blogPosts);
+                        }
+                    });
+                });
+            };
+            
+            // Show notification
+            const showNotification = (message, type = 'success') => {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 px-4 py-2 rounded-md text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} shadow-lg z-50`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            };
+            
+            return {
+                setupAuthTabs,
+                setupDashboardTabs,
+                showAuthOrDashboard,
+                updateAdminInfoDisplay,
+                showProductForm,
+                hideProductForm,
+                showBlogForm,
+                hideBlogForm,
+                renderProductsTable,
+                renderBlogTable,
+                showNotification,
+                showLoading,
+                hideLoading,
+                loginForm,
+                registerForm,
+                logoutBtn,
+                newProductBtn,
+                productFormElement,
+                productCancelBtn,
+                productListOnlineBtn,
+                newBlogBtn,
+                blogFormElement,
+                blogCancelBtn,
+                blogListOnlineBtn
+            };
+        })();
+
+        // App Controller
+        const AppController = ((api, storage, ui) => {
+            // Initialize the application
+            const init = async () => {
+                try {
+                    // Initialize IndexedDB
+                    await storage.init();
+                    
+                    // Setup UI tabs
+                    ui.setupAuthTabs();
+                    ui.setupDashboardTabs();
+                    
+                    // Check if user is authenticated
+                    const token = api.getAuthToken();
+                    if (token) {
+                        // Get admin info from localStorage
+                        const adminInfo = JSON.parse(localStorage.getItem('admin_info'));
+                        if (adminInfo) {
+                            ui.showAuthOrDashboard(true);
+                            ui.updateAdminInfoDisplay(adminInfo);
+                            
+                            // Load products and blog posts
+                            loadProducts(adminInfo.admin_id);
+                            loadBlogPosts(adminInfo.admin_id);
+                        } else {
+                            // Token exists but no admin info, logout
+                            logout();
+                        }
+                    } else {
+                        ui.showAuthOrDashboard(false);
+                    }
+                    
+                    // Setup event listeners
+                    setupEventListeners();
+                } catch (error) {
+                    console.error('Initialization error:', error);
+                    ui.showNotification('Failed to initialize application', 'error');
+                }
+            };
+            
+            // Setup event listeners
+            const setupEventListeners = () => {
+                // Auth event listeners
+                ui.loginForm.addEventListener('submit', handleLogin);
+                ui.registerForm.addEventListener('submit', handleRegister);
+                ui.logoutBtn.addEventListener('click', logout);
+                
+                // Product event listeners
+                ui.newProductBtn.addEventListener('click', () => ui.showProductForm());
+                ui.productCancelBtn.addEventListener('click', ui.hideProductForm);
+                ui.productFormElement.addEventListener('submit', handleProductSubmit);
+                ui.productListOnlineBtn.addEventListener('click', handleProductListOnline);
+                
+                // Blog event listeners
+                ui.newBlogBtn.addEventListener('click', () => ui.showBlogForm());
+                ui.blogCancelBtn.addEventListener('click', ui.hideBlogForm);
+                ui.blogFormElement.addEventListener('submit', handleBlogSubmit);
+                ui.blogListOnlineBtn.addEventListener('click', handleBlogListOnline);
+                
+                // Auto-save product form inputs
+                const productFormInputs = ui.productFormElement.querySelectorAll('input, textarea, select');
+                productFormInputs.forEach(input => {
+                    input.addEventListener('change', autoSaveProductForm);
+                });
+                
+                // Auto-save blog form inputs
+                const blogFormInputs = ui.blogFormElement.querySelectorAll('input, textarea');
+                blogFormInputs.forEach(input => {
+                    input.addEventListener('change', autoSaveBlogForm);
+                });
+            };
+            
+            // Handle login form submission
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                
+                try {
+                    ui.showLoading();
+                    
+                    // Call login API
+                    const response = await api.login({ email, password });
+                    
+                    // Save admin info to localStorage
+                    localStorage.setItem('admin_info', JSON.stringify(response.admin));
+                    
+                    // Update UI
+                    ui.showAuthOrDashboard(true);
+                    ui.updateAdminInfoDisplay(response.admin);
+                    
+                    // Load products and blog posts
+                    loadProducts(response.admin.admin_id);
+                    loadBlogPosts(response.admin.admin_id);
+                    
+                    ui.showNotification('Login successful');
+                } catch (error) {
+                    console.error('Login error:', error);
+                    ui.showNotification(error.message || 'Login failed', 'error');
+                } finally {
+                    ui.hideLoading();
+                }
+            };
+            
+            // Handle register form submission
+            const handleRegister = async (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById('register-name').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const country = document.getElementById('register-country').value;
+                const address = document.getElementById('register-address').value;
+                
+                try {
+                    ui.showLoading();
+                    
+                    // Call register API
+                    const response = await api.register({
+                        name,
+                        email,
+                        password,
+                        country,
+                        address
+                    });
+                    
+                    // Auto login after registration
+                    const loginResponse = await api.login({ email, password });
+                    
+                    // Save admin info to localStorage
+                    localStorage.setItem('admin_info', JSON.stringify(loginResponse.admin));
+                    
+                    // Save admin info to IndexedDB
+                    await storage.saveAdminInfo(loginResponse.admin);
+                    
+                    // Update UI
+                    ui.showAuthOrDashboard(true);
+                    ui.updateAdminInfoDisplay(loginResponse.admin);
+                    
+                    ui.showNotification('Registration successful');
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    ui.showNotification(error.message || 'Registration failed', 'error');
+                } finally {
+                    ui.hideLoading();
+                }
+            };
+            
+            // Logout
+            const logout = () => {
+                api.clearAuthToken();
+                localStorage.removeItem('admin_info');
+                ui.showAuthOrDashboard(false);
+                ui.showNotification('Logged out successfully');
+            };
+            
+            // Load products from IndexedDB
+            const loadProducts = async (adminId) => {
+                try {
+                    ui.showLoading();
+                    
+                    const products = await storage.getProducts(adminId);
+                    ui.renderProductsTable(products);
+                } catch (error) {
+                    console.error('Load products error:', error);
+                    ui.showNotification('Failed to load products', 'error');
+                } finally {
+                    ui.hideLoading();
+                }
+            };
+            
+            // Load blog posts from IndexedDB
+            const loadBlogPosts = async (adminId) => {
+                try {
+                    ui.showLoading();
+                    
+                    const blogPosts = await storage.getBlogPosts(adminId);
+                    ui.renderBlogTable(blogPosts);
+                } catch (error) {
+                    console.error('Load blog posts error:', error);
+                    ui.showNotification('Failed to load blog posts', 'error');
+                } finally {
+                    ui.hideLoading();
+                }
+            };
+            
+            // Auto-save product form
+            const autoSaveProductForm = async () => {
+                const productId = document.getElementById('product-id').value;
+                const adminInfo = JSON.parse(localStorage.getItem('admin_info'));
+                
+                // Create product object
+                const product = {
+                    admin_id: adminInfo.admin_id,
+                    admin_name: adminInfo.name,
+                    title: document.getElementById('product-title').value,
+                    price_code: document.getElementById('product-price').value,
+                    description: document.getElementById('product-description').value,
+                    image_main_url: document.getElementById('product-image-main').value,
+                    image2_url: document.getElementById('product-image-2').value,
+                    image3_url: document.getElementById('product-image-3').value,
+                    buy_now_url: document.getElementById('product-buy-url').value,
+                    detailed_description_url: document.getElementById('product-details-url').value,
+                    is_online: false
+                };
+                
+                try {
+                    // If editing existing product
+                    if (productId) {
+                        product.id = parseInt(productId);
+                        
+                        // Get existing product to preserve is_online status
+                        const existingProduct = await storage.getProduct(parseInt(productId));
+                        if (existingProduct) {
+                            product.is_online = existingProduct.is_online;
+                        }
+                    }
+                    
+                    // Save to IndexedDB
+                    await storage.saveProduct(product);
+                    
+                    console.log('Product auto-saved');
+                } catch (error) {
+                    console.error('Auto-save product error:', error);
+                }
+            };
+            
+            // Handle product form submission
+            const handleProductSubmit = async (e) => {
+                e.preventDefault();
+                
+                try {
+                    ui.showLoading();
+                    
+                    // Auto-save will handle saving to IndexedDB
+                    await autoSaveProductForm();
+                    
+                    // Hide form
+                    ui.hideProductForm();
+                    
+                    // Refresh products table
+                    const adminInfo = JSON.parse(localStorage.getItem('admin_info'));
+                    await loadProducts(adminInfo.admin_id);
+                    
+                    ui.showNotification('Product saved successfully');
+                } catch (error) {
+                    console.error('Save product error:', error);
+                    ui.showNotification('Failed to save product', 'error');
+                } finally {
+                    ui.hideLoading();
+                }
+            };
+            
+            // Handle product list online
+            const handleProductListOnline = async () => {
+                const productId = document.getElementById('product-id').value;
+                
+                if (!productId) {
+                    ui.showNotification('Please save the product first', 'error');
+                    return;
+                }
+                
+                try {
+                    ui.showLoading();
+                    
+                    // Get product from IndexedDB
+                    const product = await storage.getProduct(parseInt(productId));
+                    
+                    // Call API to create/update product online
+                    let response;
+                    if (product.remote_id) {
+                        response = await api.updateProduct(product.remote_id, product);
+                    } else {
+                        response = await api.createProduct(product);
+                    }
+                    
+                    // Update product in IndexedDB with remote ID and online status
+                    product.remote_id = response.id;
+                    product.is_online = true;
+                    await storage.saveProduct(product);
+                    
+                    // Hide form
+                    ui.hideProductForm();
+                    
+                    // Refresh products table
+                    const adminInfo = JSON.parse(localStorage.getItem('admin_info'));
+                    await loadProducts(adminInfo.admin_id);
+                    
+                    ui.showNotification('Product listed online successfully');
+                } catch (error) {
+                    console.error('List product online error:', error);
+                    ui.showNotification('Failed to list product online', 'error');
+                } finally {
+                    ui.hideLoading();
+                }
+            };
+            
+            // Auto-save blog form
+            const autoSaveBlogForm = async () => {
+                const blogId = document.getElementById('blog-id').value;
+                const adminInfo = JSON.parse(localStorage.getItem('admin_info'));
+                
+                // Parse tags
+                const tagsString = document.getElementById('blog-tags').value;
+                const tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag);
+                
+                // Create blog post object
+                const blogPost = {
+                    admin_id: adminInfo.admin_id,
+                    admin_name: adminInfo.name,
+                    title: document.getElementById('blog-title').value,
+                    description: document.getElementById('blog-description').value,
+                    image_url: document.getElementById('blog-image').value,
+                    tags: tags,
+                    embedded_url: document.getElementById('blog-embedded-url').value,
+                    is_online: false
+                };
+                
+                try {
+                    // If editing existing blog post
+                    if (blogId) {
+                        blogPost.id = parseInt(blogId);
+                        
+                        // Get existing blog post to preserve is_online status
+                        const existingBlogPost = await storage.getBlogPost(parseInt(blogId));
+                        if (existingBlogPost) {
+                            blogPost.is_online = existingBlogPost.is_online;
+                        }
+                    }
+                    
+                    // Save to IndexedDB
+                    await storage.saveBlogPost(blogPost);
+                    
+                    console.log('Blog post auto-saved');
+                } catch (error) {
+                    console.error('Auto-save blog post error:', error);
+                }
+            };
+            
+            // Handle blog form submission
+            const handleBlogSubmit = async (e) => {
+                e.preventDefault();
+                
+                try {
+                    ui.showLoading();
+                    
+                    // Auto-save will handle saving to IndexedDB
+                    await autoSaveBlogForm();
+                    
+                    // Hide form
+                    ui.hideBlogForm();
+                    
+                    // Refresh blog posts table
+                    const adminInfo = JSON.parse(localStorage.getItem('admin_info'));
+                    await loadBlogPosts(adminInfo.admin_id);
+                    
+                    ui.showNotification('Blog post saved successfully');
+                } catch (error) {
+                    console.error('Save blog post error:', error);
+                    ui.showNotification('Failed to save blog post', 'error');
+                } finally {
+                    ui.hideLoading();
+                }
+            };
+            
+            // Handle blog list online
+            const handleBlogListOnline = async () => {
+                const blogId = document.getElementById('blog-id').value;
+                
+                if (!blogId) {
+                    ui.showNotification('Please save the blog post first', 'error');
+                    return;
+                }
+                
+                try {
+                    ui.showLoading();
+                    
+                    // Get blog post from IndexedDB
+                    const blogPost = await storage.getBlogPost(parseInt(blogId));
+                    
+                    // Call API to create/update blog post online
+                    let response;
+                    if (blogPost.remote_id) {
+                        response = await api.updateBlogPost(blogPost.remote_id, blogPost);
+                    } else {
+                        response = await api.createBlogPost(blogPost);
+                    }
+                    
+                    // Update blog post in IndexedDB with remote ID and online status
+                    blogPost.remote_id = response.id;
+                    blogPost.is_online = true;
+                    await storage.saveBlogPost(blogPost);
+                    
+                    // Hide form
+                    ui.hideBlogForm();
+                    
+                    // Refresh blog posts table
+                    const adminInfo = JSON.parse(localStorage.getItem('admin_info'));
+                    await loadBlogPosts(adminInfo.admin_id);
+                    
+                    ui.showNotification('Blog post listed online successfully');
+                } catch (error) {
+                    console.error('List blog post online error:', error);
+                    ui.showNotification('Failed to list blog post online', 'error');
+                } finally {
+                    ui.hideLoading();
+                }
+            };
+            
+            return {
+                init
+            };
+        })(ApiModule, StorageModule, UIModule);
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', AppController.init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop WebApp Market</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="simple-indexeddb-sync.js"></script>
+  <script type="module" src="init-sync.js"></script>
+  <script type="module" src="improved-sync.js"></script>
+  <script type="module" src="sync-debug.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f8fafc;
+    }
+    
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+    
+    .mini-cart {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+    
+    .mini-cart.open {
+      max-height: 500px;
+    }
+    
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 5px;
+      color: white;
+      z-index: 1000;
+      transform: translateY(-100px);
+      transition: transform 0.3s ease;
+    }
+    
+    .notification.show {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div id="notification" class="notification bg-green-500 shadow-lg"></div>
+  
+  <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+          <h1 class="text-2xl font-bold">Shop WebApp Market</h1>
+          <nav class="hidden md:flex space-x-6">
+            <a href="#" class="hover:text-blue-200 transition" data-page="home">Home</a>
+            <a href="#" class="hover:text-blue-200 transition" data-page="products">Products</a>
+            <a href="#" class="hover:text-blue-200 transition" data-page="blog">Blog</a>
+          </nav>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+          <div class="relative" id="cart-container">
+            <button id="cart-toggle" class="flex items-center hover:text-blue-200 transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span id="cart-count">0</span>
+            </button>
+            
+            <div id="mini-cart" class="mini-cart absolute right-0 mt-2 w-72 bg-white rounded-md shadow-lg z-10 text-gray-800">
+              <div class="p-4">
+                <h3 class="font-semibold text-lg border-b pb-2">Your Cart</h3>
+                <div id="mini-cart-items" class="py-2 max-h-60 overflow-y-auto">
+                  <!-- Cart items will be added here -->
+                </div>
+                <div class="border-t pt-2 mt-2">
+                  <div class="flex justify-between font-semibold">
+                    <span>Total:</span>
+                    <span id="mini-cart-total">$0.00</span>
+                  </div>
+                  <button id="checkout-btn" class="mt-3 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition">
+                    Checkout
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div id="auth-container">
+            <button id="login-btn" class="bg-white text-blue-600 px-4 py-2 rounded-md hover:bg-blue-50 transition">Login</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  
+  <main class="container mx-auto px-4 py-8">
+    <div id="page-content">
+      <!-- Page content will be loaded here -->
+    </div>
+  </main>
+  
+  <footer class="bg-gray-800 text-white py-8">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between">
+        <div class="mb-6 md:mb-0">
+          <h2 class="text-xl font-bold mb-4">Shop WebApp Market</h2>
+          <p class="text-gray-400">Your one-stop shop for digital products</p>
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-8">
+          <div>
+            <h3 class="text-lg font-semibold mb-3">Navigation</h3>
+            <ul class="space-y-2 text-gray-400">
+              <li><a href="#" class="hover:text-white transition" data-page="home">Home</a></li>
+              <li><a href="#" class="hover:text-white transition" data-page="products">Products</a></li>
+              <li><a href="#" class="hover:text-white transition" data-page="blog">Blog</a></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold mb-3">Legal</h3>
+            <ul class="space-y-2 text-gray-400">
+              <li><a href="#" class="hover:text-white transition">Terms of Service</a></li>
+              <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold mb-3">Contact</h3>
+            <ul class="space-y-2 text-gray-400">
+              <li>Email: info@webappmarket.com</li>
+              <li>Phone: +1 (555) 123-4567</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+        <p>&copy; 2025 Shop WebApp Market. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- Modal Templates -->
+  <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div id="modal-content" class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <!-- Modal content will be loaded here -->
+    </div>
+  </div>
+  
+  <script>
+    // Custom Bcrypt-like implementation based on the Python code provided
+    const CustomBcrypt = {
+      // Generate a random salt
+      generateSalt: function(length = 22) {
+        const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+        let salt = '';
+        const randomValues = new Uint8Array(length);
+        window.crypto.getRandomValues(randomValues);
+        
+        for (let i = 0; i < length; i++) {
+          salt += charset.charAt(randomValues[i] % charset.length);
+        }
+        
+        return salt;
+      },
+      
+      // SHA-256 hash function
+      sha256: async function(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      },
+      
+      // Bcrypt-like hash function
+      bcryptHash: async function(password, salt, cost) {
+        let passwordSalt = `${password}${salt}`;
+        let hashedPasswordSalt = await this.sha256(passwordSalt);
+        
+        // Simplified version of the cost factor (reduced for browser performance)
+        // In a real implementation, we'd use a more efficient approach
+        const iterations = Math.min(2 ** cost, 1024); // Limit iterations for browser performance
+        
+        for (let i = 0; i < iterations; i++) {
+          hashedPasswordSalt = await this.sha256(hashedPasswordSalt);
+        }
+        
+        return hashedPasswordSalt;
+      },
+      
+      // Hash a password
+      hashPassword: async function(password, rounds = 12) {
+        const salt = this.generateSalt();
+        const hashedPassword = await this.bcryptHash(password, salt, rounds);
+        return `${rounds}$${salt}$${hashedPassword}`;
+      },
+      
+      // Verify a password against a hash
+      verifyPassword: async function(password, hashedPassword) {
+        const parts = hashedPassword.split('$');
+        if (parts.length !== 3) {
+          return false;
+        }
+        
+        const cost = parseInt(parts[0]);
+        const salt = parts[1];
+        const storedHash = parts[2];
+        
+        const computedHash = await this.bcryptHash(password, salt, cost);
+        return storedHash === computedHash;
+      }
+    };
+    
+    // Database setup and initialization
+    let db;
+    const DB_NAME = 'WebAppMarketDB';
+    const DB_VERSION = 1;
+    let currentUser = null;
+    let cart = [];
+    
+    // Initialize the database
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onerror = (event) => {
+          console.error("Database error:", event.target.error);
+          reject("Could not open database");
+        };
+        
+        request.onsuccess = (event) => {
+          db = event.target.result;
+          console.log("Database opened successfully");
+          resolve(db);
+        };
+        
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          
+          // Create object stores if they don't exist
+          if (!db.objectStoreNames.contains('products')) {
+            const productStore = db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
+            productStore.createIndex('title', 'title', { unique: false });
+            productStore.createIndex('price', 'price', { unique: false });
+          }
+          
+          if (!db.objectStoreNames.contains('blogs')) {
+            const blogStore = db.createObjectStore('blogs', { keyPath: 'id', autoIncrement: true });
+            blogStore.createIndex('title', 'title', { unique: false });
+            blogStore.createIndex('createdAt', 'createdAt', { unique: false });
+          }
+          
+          if (!db.objectStoreNames.contains('users')) {
+            const userStore = db.createObjectStore('users', { keyPath: 'email' });
+            userStore.createIndex('name', 'name', { unique: false });
+            userStore.createIndex('role', 'role', { unique: false });
+          }
+          
+          if (!db.objectStoreNames.contains('activities')) {
+            const activityStore = db.createObjectStore('activities', { keyPath: 'id', autoIncrement: true });
+            activityStore.createIndex('timestamp', 'timestamp', { unique: false });
+            activityStore.createIndex('user', 'user', { unique: false });
+          }
+          
+          if (!db.objectStoreNames.contains('comments')) {
+            const commentStore = db.createObjectStore('comments', { keyPath: 'id', autoIncrement: true });
+            commentStore.createIndex('productId', 'productId', { unique: false });
+            commentStore.createIndex('userId', 'userId', { unique: false });
+          }
+          
+          if (!db.objectStoreNames.contains('likes')) {
+            const likeStore = db.createObjectStore('likes', { keyPath: 'id', autoIncrement: true });
+            likeStore.createIndex('productId', 'productId', { unique: false });
+            likeStore.createIndex('userId', 'userId', { unique: false });
+          }
+        };
+      });
+    }
+    
+    // Seed initial data if needed
+    async function seedInitialData() {
+      // Check if we have any users
+      const users = await getAllFromStore('users');
+      if (users.length === 0) {
+        try {
+          // Create admin user with password hashing
+          const adminPassword = await CustomBcrypt.hashPassword('Admin0$');
+          await addToStore('users', {
+            name: "Admin 0",
+            email: "admin0@gmail.com",
+            password: adminPassword,
+            role: "admin",
+            createdAt: new Date().toISOString()
+          });
+          
+          // Log activity
+          await addToStore('activities', {
+            description: "New user registered: Admin 0 (admin)",
+            timestamp: new Date().toISOString(),
+            user: "System"
+          });
+          
+          // Add sample product
+          await addToStore('products', {
+            imageUrl: "https://via.placeholder.com/400x300/2563eb/ffffff?text=Modern+IT+x",
+            title: "Modern IT x",
+            description: "Modern IT solutions template designed for businesses, startups, and enterprises.",
+            price: 69,
+            buyUrl: "https://buy.stripe.com/exxxmekMeCkaEF",
+            addToCard: "price_1RAbP5AliYCIqTL0yk4lBWA59",
+            detailUrl: "https://storage.googleapis.com/media-data-web-glob/index-phtml.html",
+            updatedAt: new Date().toISOString(),
+            createdAt: new Date().toISOString()
+          });
+          
+          // Add sample blog post
+          await addToStore('blogs', {
+            title: "Modern IT solutions",
+            description: "Modern IT solutions with user-friendly layout, next seamless experience.",
+            imageUrl: "https://via.placeholder.com/800x400/4f46e5/ffffff?text=Modern+IT+Solutions",
+            tags: ["Mtml", "Modern", "Bootstrap", "Businesses"],
+            updatedAt: new Date().toISOString(),
+            createdAt: new Date().toISOString()
+          });
+          
+          // Add more sample products
+          const sampleProducts = [
+            {
+              imageUrl: "https://via.placeholder.com/400x300/3b82f6/ffffff?text=Speed+HTML+IT",
+              title: "Speed HTML IT",
+              description: "Modern IT solutions template designed to meet the needs of businesses and startups.",
+              price: 59,
+              buyUrl: "https://buy.stripe.com/xxxMeCkaEF",
+              addToCard: "price_1RAbP5AliYCIqTL0yk4lBWA59",
+              detailUrl: "https://storage.googleapis.com/bucket-zero-media/0/image_listing/index.html",
+              updatedAt: new Date().toISOString(),
+              createdAt: new Date().toISOString()
+            },
+            {
+              imageUrl: "https://via.placeholder.com/400x300/6366f1/ffffff?text=E-commerce+Solution",
+              title: "E-commerce Solution",
+              description: "Complete e-commerce solution with product management and checkout.",
+              price: 49,
+              buyUrl: "https://buy.stripe.com/xxxMeCkaEF",
+              addToCard: "price_1RAbP5AliYCIqTL0yk4lBWA5",
+              detailUrl: "https://storage.googleapis.com/bucket-zero-media/0/image_listing/index.html",
+              updatedAt: new Date().toISOString(),
+              createdAt: new Date().toISOString()
+            },
+            {
+              imageUrl: "https://via.placeholder.com/400x300/8b5cf6/ffffff?text=Portfolio+Template",
+              title: "Portfolio Template",
+              description: "Professional portfolio template for showcasing your work and skills.",
+              price: 39,
+              buyUrl: "https://buy.stripe.com/xxxMeCkaEF",
+              addToCard: "price_1RAbP5AliYCIqTL0yk4lBWA4",
+              detailUrl: "https://storage.googleapis.com/bucket-zero-media/0/image_listing/index.html",
+              updatedAt: new Date().toISOString(),
+              createdAt: new Date().toISOString()
+            },
+            {
+              imageUrl: "https://via.placeholder.com/400x300/a855f7/ffffff?text=Blog+Platform",
+              title: "Blog Platform",
+              description: "Complete blog platform with content management and user comments.",
+              price: 29,
+              buyUrl: "https://buy.stripe.com/xxxMeCkaEF",
+              addToCard: "price_1RAbP5AliYCIqTL0yk4lBWA3",
+              detailUrl: "https://storage.googleapis.com/bucket-zero-media/0/image_listing/index.html",
+              updatedAt: new Date().toISOString(),
+              createdAt: new Date().toISOString()
+            },
+            {
+              imageUrl: "https://via.placeholder.com/400x300/d946ef/ffffff?text=Landing+Page+Kit",
+              title: "Landing Page Kit",
+              description: "Professional landing page kit with multiple sections and components.",
+              price: 19,
+              buyUrl: "https://buy.stripe.com/xxxMeCkaEF",
+              addToCard: "price_1RAbP5AliYCIqTL0yk4lBWA2",
+              detailUrl: "https://storage.googleapis.com/bucket-zero-media/0/image_listing/index.html",
+              updatedAt: new Date().toISOString(),
+              createdAt: new Date().toISOString()
+            },
+            {
+              imageUrl: "https://via.placeholder.com/400x300/ec4899/ffffff?text=Admin+Dashboard",
+              title: "Admin Dashboard",
+              description: "Complete admin dashboard with charts, tables, and user management.",
+              price: 9,
+              buyUrl: "https://buy.stripe.com/xxxMeCkaEF",
+              addToCard: "price_1RAbP5AliYCIqTL0yk4lBWA1",
+              detailUrl: "https://storage.googleapis.com/bucket-zero-media/0/image_listing/index.html",
+              updatedAt: new Date().toISOString(),
+              createdAt: new Date().toISOString()
+            }
+          ];
+          
+          for (const product of sampleProducts) {
+            await addToStore('products', product);
+          }
+          
+          // Add more sample blog posts
+          const sampleBlogs = [
+            {
+              title: "The Future of Web Development",
+              description: "Exploring the latest trends and technologies in web development for 2025 and beyond.",
+              imageUrl: "https://via.placeholder.com/800x400/2563eb/ffffff?text=Web+Development+Trends",
+              tags: ["WebDev", "Trends", "Technology", "Future"],
+              updatedAt: new Date().toISOString(),
+              createdAt: new Date().toISOString()
+            },
+            {
+              title: "Optimizing Your E-commerce Store",
+              description: "Tips and tricks for improving conversion rates and user experience in your online store.",
+              imageUrl: "https://via.placeholder.com/800x400/3b82f6/ffffff?text=E-commerce+Optimization",
+              tags: ["E-commerce", "Optimization", "UX", "Conversion"],
+              updatedAt: new Date().toISOString(),
+              createdAt: new Date().toISOString()
+            },
+            {
+              title: "Building Responsive Websites",
+              description: "Best practices for creating websites that look great on all devices and screen sizes.",
+              imageUrl: "https://via.placeholder.com/800x400/6366f1/ffffff?text=Responsive+Design",
+              tags: ["Responsive", "Design", "Mobile", "CSS"],
+              updatedAt: new Date().toISOString(),
+              createdAt: new Date().toISOString()
+            }
+          ];
+          
+          for (const blog of sampleBlogs) {
+            await addToStore('blogs', blog);
+          }
+        } catch (error) {
+          console.error("Error seeding initial data:", error);
+          // Continue anyway - we don't want to block the app initialization
+        }
+      }
+    }
+    
+    // Database helper functions
+    function addToStore(storeName, data) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const request = store.add(data);
+        
+        request.onsuccess = (event) => {
+          resolve(event.target.result);
+        };
+        
+        request.onerror = (event) => {
+          console.error(`Error adding to ${storeName}:`, event.target.error);
+          reject(event.target.error);
+        };
+      });
+    }
+    
+    function updateInStore(storeName, data) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const request = store.put(data);
+        
+        request.onsuccess = (event) => {
+          resolve(event.target.result);
+        };
+        
+        request.onerror = (event) => {
+          console.error(`Error updating in ${storeName}:`, event.target.error);
+          reject(event.target.error);
+        };
+      });
+    }
+    
+    function getFromStore(storeName, key) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        const request = store.get(key);
+        
+        request.onsuccess = (event) => {
+          resolve(event.target.result);
+        };
+        
+        request.onerror = (event) => {
+          console.error(`Error getting from ${storeName}:`, event.target.error);
+          reject(event.target.error);
+        };
+      });
+    }
+    
+    function getAllFromStore(storeName) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        const request = store.getAll();
+        
+        request.onsuccess = (event) => {
+          resolve(event.target.result);
+        };
+        
+        request.onerror = (event) => {
+          console.error(`Error getting all from ${storeName}:`, event.target.error);
+          reject(event.target.error);
+        };
+      });
+    }
+    
+    function deleteFromStore(storeName, key) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const request = store.delete(key);
+        
+        request.onsuccess = (event) => {
+          resolve(event.target.result);
+        };
+        
+        request.onerror = (event) => {
+          console.error(`Error deleting from ${storeName}:`, event.target.error);
+          reject(event.target.error);
+        };
+      });
+    }
+    
+    function getByIndex(storeName, indexName, value) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        const index = store.index(indexName);
+        const request = index.getAll(value);
+        
+        request.onsuccess = (event) => {
+          resolve(event.target.result);
+        };
+        
+        request.onerror = (event) => {
+          console.error(`Error getting by index from ${storeName}:`, event.target.error);
+          reject(event.target.error);
+        };
+      });
+    }
+    
+    // Authentication functions
+    async function registerUser(name, email, password) {
+      try {
+        // Check if user already exists
+        const existingUser = await getFromStore('users', email);
+        if (existingUser) {
+          throw new Error('User with this email already exists');
+        }
+        
+        // Hash password using our custom implementation
+        let hashedPassword;
+        try {
+          hashedPassword = await CustomBcrypt.hashPassword(password);
+        } catch (error) {
+          console.error('Password hashing error:', error);
+          throw new Error('Error during registration. Please try again.');
+        }
+        
+        // Create user
+        const user = {
+          name,
+          email,
+          password: hashedPassword,
+          role: 'user',
+          createdAt: new Date().toISOString()
+        };
+        
+        await addToStore('users', user);
+        
+        // Log activity
+        await addToStore('activities', {
+          description: `New user registered: ${name}`,
+          timestamp: new Date().toISOString(),
+          user: "System"
+        });
+        
+        return user;
+      } catch (error) {
+        console.error('Registration error:', error);
+        throw error;
+      }
+    }
+    
+    async function loginUser(email, password) {
+      try {
+        const user = await getFromStore('users', email);
+        if (!user) {
+          throw new Error('User not found');
+        }
+        
+        // Compare password using our custom implementation
+        let isMatch;
+        try {
+          isMatch = await CustomBcrypt.verifyPassword(password, user.password);
+        } catch (error) {
+          console.error('Password verification error:', error);
+          throw new Error('Error during login. Please try again.');
+        }
+        
+        if (!isMatch) {
+          throw new Error('Invalid password');
+        }
+        
+        // Log activity
+        await addToStore('activities', {
+          description: `User logged in: ${user.name}`,
+          timestamp: new Date().toISOString(),
+          user: user.name
+        });
+        
+        return user;
+      } catch (error) {
+        console.error('Login error:', error);
+        throw error;
+      }
+    }
+    
+    // UI Helper Functions
+    function showNotification(message, type = 'success') {
+      const notification = document.getElementById('notification');
+      notification.textContent = message;
+      notification.className = `notification ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} shadow-lg show`;
+      
+      setTimeout(() => {
+        notification.className = `notification ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} shadow-lg`;
+      }, 3000);
+    }
+    
+    function showModal(content) {
+      const modalContainer = document.getElementById('modal-container');
+      const modalContent = document.getElementById('modal-content');
+      
+      modalContent.innerHTML = content;
+      modalContainer.classList.remove('hidden');
+      
+      // Close modal when clicking outside
+      modalContainer.addEventListener('click', (e) => {
+        if (e.target === modalContainer) {
+          closeModal();
+        }
+      });
+    }
+    
+    function closeModal() {
+      const modalContainer = document.getElementById('modal-container');
+      modalContainer.classList.add('hidden');
+    }
+    
+    // Cart Functions
+    function addToCart(product) {
+      const existingItem = cart.find(item => item.id === product.id);
+      
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        if (cart.length >= 8) {
+          showNotification('Cart is full (max 8 items)', 'error');
+          return;
+        }
+        cart.push({
+          id: product.id,
+          title: product.title,
+          price: product.price,
+          priceId: product.addToCard,
+          quantity: 1
+        });
+      }
+      
+      updateCartUI();
+      showNotification(`Added ${product.title} to cart`);
+    }
+    
+    function removeFromCart(productId) {
+      cart = cart.filter(item => item.id !== productId);
+      updateCartUI();
+      showNotification('Item removed from cart');
+    }
+    
+    function updateCartUI() {
+      const cartCount = document.getElementById('cart-count');
+      const miniCartItems = document.getElementById('mini-cart-items');
+      const miniCartTotal = document.getElementById('mini-cart-total');
+      
+      // Update cart count
+      const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+      cartCount.textContent = totalItems;
+      
+      // Update mini cart items
+      miniCartItems.innerHTML = '';
+      
+      if (cart.length === 0) {
+        miniCartItems.innerHTML = '<p class="text-gray-500 py-2">Your cart is empty</p>';
+      } else {
+        cart.forEach(item => {
+          const itemElement = document.createElement('div');
+          itemElement.className = 'flex justify-between items-center py-2 border-b';
+          itemElement.innerHTML = `
+            <div>
+              <p class="font-medium">${item.title}</p>
+              <p class="text-sm text-gray-600">$${item.price} × ${item.quantity}</p>
+            </div>
+            <button class="text-red-500 hover:text-red-700" data-remove="${item.id}">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          `;
+          miniCartItems.appendChild(itemElement);
+          
+          // Add event listener to remove button
+          itemElement.querySelector(`button[data-remove="${item.id}"]`).addEventListener('click', () => {
+            removeFromCart(item.id);
+          });
+        });
+      }
+      
+      // Update total
+      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      miniCartTotal.textContent = `$${total.toFixed(2)}`;
+      
+      // Update checkout button
+      const checkoutBtn = document.getElementById('checkout-btn');
+      checkoutBtn.textContent = `Checkout $${total.toFixed(2)}`;
+    }
+    
+    // Page Rendering Functions
+    async function renderHomePage() {
+      const pageContent = document.getElementById('page-content');
+      
+      // Get featured products and blog posts
+      const products = await getAllFromStore('products');
+      const blogs = await getAllFromStore('blogs');
+      
+      // Sort by newest
+      products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      blogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
+      // Get featured items (limit to 4 for each)
+      const featuredProducts = products.slice(0, 4);
+      const featuredBlogs = blogs.slice(0, 2);
+      
+      pageContent.innerHTML = `
+        <section class="mb-12">
+          <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl shadow-lg overflow-hidden">
+            <div class="flex flex-col md:flex-row items-center">
+              <div class="p-8 md:w-1/2">
+                <h1 class="text-3xl md:text-4xl font-bold text-white mb-4">Welcome to Shop WebApp Market</h1>
+                <p class="text-blue-100 text-lg mb-6">Discover premium digital products for your business and personal needs.</p>
+                <button class="bg-white text-blue-600 px-6 py-3 rounded-md font-semibold hover:bg-blue-50 transition" data-page="products">
+                  Browse Products
+                </button>
+              </div>
+              <div class="md:w-1/2 p-4">
+                <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-lg p-6 transform rotate-2 shadow-xl">
+                  <div class="grid grid-cols-2 gap-4">
+                    ${featuredProducts.slice(0, 4).map(product => `
+                      <div class="bg-white rounded-lg shadow-md overflow-hidden transform transition hover:scale-105">
+                        <img src="${product.imageUrl}" alt="${product.title}" class="w-full h-32 object-cover">
+                        <div class="p-3">
+                          <h3 class="font-medium text-gray-800 truncate">${product.title}</h3>
+                          <p class="text-blue-600 font-bold">$${product.price}</p>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <section class="mb-12">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Featured Products</h2>
+            <a href="#" class="text-blue-600 hover:text-blue-800 font-medium" data-page="products">View All</a>
+          </div>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            ${featuredProducts.map(product => `
+              <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+                <img src="${product.imageUrl}" alt="${product.title}" class="w-full h-48 object-cover">
+                <div class="p-4">
+                  <h3 class="font-semibold text-lg mb-2">${product.title}</h3>
+                  <p class="text-gray-600 text-sm mb-4 line-clamp-2">${product.description}</p>
+                  <div class="flex justify-between items-center">
+                    <span class="text-blue-600 font-bold">$${product.price}</span>
+                    <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition" data-add-to-cart="${product.id}">
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+        
+        <section class="mb-12">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Latest Blog Posts</h2>
+            <a href="#" class="text-blue-600 hover:text-blue-800 font-medium" data-page="blog">View All</a>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            ${featuredBlogs.map(blog => `
+              <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+                <div class="md:flex">
+                  <div class="md:w-1/3">
+                    <img src="${blog.imageUrl}" alt="${blog.title}" class="w-full h-full object-cover">
+                  </div>
+                  <div class="p-4 md:w-2/3">
+                    <h3 class="font-semibold text-lg mb-2">${blog.title}</h3>
+                    <p class="text-gray-600 text-sm mb-3">${blog.description}</p>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                      ${blog.tags.map(tag => `
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${tag}</span>
+                      `).join('')}
+                    </div>
+                    <a href="#" class="text-blue-600 hover:text-blue-800 font-medium" data-view-blog="${blog.id}">
+                      Read More
+                    </a>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `;
+      
+      // Add event listeners for add to cart buttons
+      featuredProducts.forEach(product => {
+        const addButton = pageContent.querySelector(`button[data-add-to-cart="${product.id}"]`);
+        if (addButton) {
+          addButton.addEventListener('click', () => addToCart(product));
+        }
+      });
+      
+      // Add event listeners for page navigation
+      pageContent.querySelectorAll('[data-page]').forEach(element => {
+        element.addEventListener('click', (e) => {
+          e.preventDefault();
+          navigateTo(element.dataset.page);
+        });
+      });
+      
+      // Add event listeners for blog view
+      pageContent.querySelectorAll('[data-view-blog]').forEach(element => {
+        element.addEventListener('click', (e) => {
+          e.preventDefault();
+          renderBlogDetail(element.dataset.viewBlog);
+        });
+      });
+    }
+    
+    async function renderProductsPage(page = 1) {
+      const pageContent = document.getElementById('page-content');
+      const productsPerPage = 8;
+      
+      // Show loading indicator
+      pageContent.innerHTML = '<div class="loader"></div>';
+      
+      // Get all products
+      const products = await getAllFromStore('products');
+      
+      // Calculate pagination
+      const totalProducts = products.length;
+      const totalPages = Math.ceil(totalProducts / productsPerPage);
+      const startIndex = (page - 1) * productsPerPage;
+      const endIndex = startIndex + productsPerPage;
+      const currentProducts = products.slice(startIndex, endIndex);
+      
+      pageContent.innerHTML = `
+        <section>
+          <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Products</h1>
+            <div class="flex items-center space-x-2">
+              <select id="sort-products" class="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="product-grid mb-8">
+            ${currentProducts.map(product => `
+              <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition fade-in">
+                <img src="${product.imageUrl}" alt="${product.title}" class="w-full h-48 object-cover">
+                <div class="p-4">
+                  <h3 class="font-semibold text-lg mb-2">${product.title}</h3>
+                  <p class="text-gray-600 text-sm mb-4 line-clamp-2">${product.description}</p>
+                  <div class="flex justify-between items-center">
+                    <span class="text-blue-600 font-bold">$${product.price}</span>
+                    <div class="space-x-2">
+                      <button class="bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300 transition" data-view-product="${product.id}">
+                        Details
+                      </button>
+                      <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition" data-add-to-cart="${product.id}">
+                        Add to Cart
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          
+          ${totalPages > 1 ? `
+            <div class="flex justify-center space-x-2">
+              ${page > 1 ? `
+                <button class="px-4 py-2 border rounded-md hover:bg-gray-100" data-page="${page - 1}">
+                  Previous
+                </button>
+              ` : ''}
+              
+              ${Array.from({ length: totalPages }, (_, i) => i + 1).map(p => `
+                <button class="px-4 py-2 border rounded-md ${p === page ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}" data-page="${p}">
+                  ${p}
+                </button>
+              `).join('')}
+              
+              ${page < totalPages ? `
+                <button class="px-4 py-2 border rounded-md hover:bg-gray-100" data-page="${page + 1}">
+                  Next
+                </button>
+              ` : ''}
+            </div>
+          ` : ''}
+        </section>
+      `;
+      
+      // Add event listeners for pagination
+      pageContent.querySelectorAll('[data-page]').forEach(element => {
+        element.addEventListener('click', () => {
+          renderProductsPage(parseInt(element.dataset.page));
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+      
+      // Add event listeners for add to cart buttons
+      currentProducts.forEach(product => {
+        const addButton = pageContent.querySelector(`button[data-add-to-cart="${product.id}"]`);
+        if (addButton) {
+          addButton.addEventListener('click', () => addToCart(product));
+        }
+      });
+      
+      // Add event listeners for view product details
+      pageContent.querySelectorAll('[data-view-product]').forEach(element => {
+        element.addEventListener('click', () => {
+          renderProductDetail(element.dataset.viewProduct);
+        });
+      });
+      
+      // Add event listener for sorting
+      const sortSelect = document.getElementById('sort-products');
+      sortSelect.addEventListener('change', async () => {
+        const sortValue = sortSelect.value;
+        let sortedProducts = [...products];
+        
+        switch (sortValue) {
+          case 'newest':
+            sortedProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            break;
+          case 'oldest':
+            sortedProducts.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            break;
+          case 'price-asc':
+            sortedProducts.sort((a, b) => a.price - b.price);
+            break;
+          case 'price-desc':
+            sortedProducts.sort((a, b) => b.price - a.price);
+            break;
+        }
+        
+        // Recalculate pagination with sorted products
+        const startIndex = (page - 1) * productsPerPage;
+        const endIndex = startIndex + productsPerPage;
+        const currentProducts = sortedProducts.slice(startIndex, endIndex);
+        
+        // Update product grid
+        const productGrid = pageContent.querySelector('.product-grid');
+        productGrid.innerHTML = currentProducts.map(product => `
+          <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition fade-in">
+            <img src="${product.imageUrl}" alt="${product.title}" class="w-full h-48 object-cover">
+            <div class="p-4">
+              <h3 class="font-semibold text-lg mb-2">${product.title}</h3>
+              <p class="text-gray-600 text-sm mb-4 line-clamp-2">${product.description}</p>
+              <div class="flex justify-between items-center">
+                <span class="text-blue-600 font-bold">$${product.price}</span>
+                <div class="space-x-2">
+                  <button class="bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300 transition" data-view-product="${product.id}">
+                    Details
+                  </button>
+                  <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition" data-add-to-cart="${product.id}">
+                    Add to Cart
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+        
+        // Re-add event listeners
+        currentProducts.forEach(product => {
+          const addButton = productGrid.querySelector(`button[data-add-to-cart="${product.id}"]`);
+          if (addButton) {
+            addButton.addEventListener('click', () => addToCart(product));
+          }
+          
+          const viewButton = productGrid.querySelector(`button[data-view-product="${product.id}"]`);
+          if (viewButton) {
+            viewButton.addEventListener('click', () => {
+              renderProductDetail(product.id);
+            });
+          }
+        });
+      });
+    }
+    
+    async function renderBlogPage(page = 1) {
+      const pageContent = document.getElementById('page-content');
+      const blogsPerPage = 5;
+      
+      // Show loading indicator
+      pageContent.innerHTML = '<div class="loader"></div>';
+      
+      // Get all blogs
+      const blogs = await getAllFromStore('blogs');
+      
+      // Sort by newest
+      blogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
+      // Calculate pagination
+      const totalBlogs = blogs.length;
+      const totalPages = Math.ceil(totalBlogs / blogsPerPage);
+      const startIndex = (page - 1) * blogsPerPage;
+      const endIndex = startIndex + blogsPerPage;
+      const currentBlogs = blogs.slice(startIndex, endIndex);
+      
+      pageContent.innerHTML = `
+        <section>
+          <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Blog</h1>
+            <p class="text-gray-600">Latest articles and updates</p>
+          </div>
+          
+          <div class="space-y-6 mb-8">
+            ${currentBlogs.map(blog => `
+              <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition fade-in">
+                <div class="md:flex">
+                  <div class="md:w-1/4">
+                    <img src="${blog.imageUrl}" alt="${blog.title}" class="w-full h-full object-cover">
+                  </div>
+                  <div class="p-6 md:w-3/4">
+                    <h2 class="font-semibold text-xl mb-2">${blog.title}</h2>
+                    <p class="text-gray-600 mb-4">${blog.description}</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                      ${blog.tags.map(tag => `
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${tag}</span>
+                      `).join('')}
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-gray-500 text-sm">${new Date(blog.createdAt).toLocaleDateString()}</span>
+                      <a href="#" class="text-blue-600 hover:text-blue-800 font-medium" data-view-blog="${blog.id}">
+                        Read More
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          
+          ${totalPages > 1 ? `
+            <div class="flex justify-center space-x-2">
+              ${page > 1 ? `
+                <button class="px-4 py-2 border rounded-md hover:bg-gray-100" data-page="${page - 1}">
+                  Previous
+                </button>
+              ` : ''}
+              
+              ${Array.from({ length: totalPages }, (_, i) => i + 1).map(p => `
+                <button class="px-4 py-2 border rounded-md ${p === page ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}" data-page="${p}">
+                  ${p}
+                </button>
+              `).join('')}
+              
+              ${page < totalPages ? `
+                <button class="px-4 py-2 border rounded-md hover:bg-gray-100" data-page="${page + 1}">
+                  Next
+                </button>
+              ` : ''}
+            </div>
+          ` : ''}
+        </section>
+      `;
+      
+      // Add event listeners for pagination
+      pageContent.querySelectorAll('[data-page]').forEach(element => {
+        element.addEventListener('click', () => {
+          renderBlogPage(parseInt(element.dataset.page));
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+      
+      // Add event listeners for blog view
+      pageContent.querySelectorAll('[data-view-blog]').forEach(element => {
+        element.addEventListener('click', (e) => {
+          e.preventDefault();
+          renderBlogDetail(element.dataset.viewBlog);
+        });
+      });
+    }
+    
+    async function renderProductDetail(productId) {
+      const pageContent = document.getElementById('page-content');
+      
+      // Show loading indicator
+      pageContent.innerHTML = '<div class="loader"></div>';
+      
+      try {
+        // Get product details
+        const product = await getFromStore('products', parseInt(productId));
+        if (!product) {
+          pageContent.innerHTML = '<div class="text-center py-8"><p class="text-xl text-gray-600">Product not found</p></div>';
+          return;
+        }
+        
+        // Get comments for this product
+        const comments = await getByIndex('comments', 'productId', parseInt(productId));
+        
+        // Get likes for this product
+        const likes = await getByIndex('likes', 'productId', parseInt(productId));
+        const likeCount = likes.length;
+        
+        // Check if current user has liked this product
+        let userHasLiked = false;
+        if (currentUser) {
+          userHasLiked = likes.some(like => like.userId === currentUser.email);
+        }
+        
+        pageContent.innerHTML = `
+          <section class="mb-8">
+            <div class="mb-4">
+              <a href="#" class="text-blue-600 hover:text-blue-800 flex items-center" data-page="products">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Products
+              </a>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div class="md:flex">
+                <div class="md:w-1/2">
+                  <img src="${product.imageUrl}" alt="${product.title}" class="w-full h-full object-cover">
+                </div>
+                <div class="p-6 md:w-1/2">
+                  <h1 class="text-3xl font-bold text-gray-800 mb-4">${product.title}</h1>
+                  <p class="text-gray-600 mb-6">${product.description}</p>
+                  
+                  <div class="flex items-center mb-6">
+                    <span class="text-2xl font-bold text-blue-600 mr-4">$${product.price}</span>
+                    <div class="flex items-center space-x-2">
+                      <button id="like-button" class="flex items-center ${userHasLiked ? 'text-red-500' : 'text-gray-500'} hover:text-red-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="${userHasLiked ? 'currentColor' : 'none'}" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        <span id="like-count" class="ml-1">${likeCount}</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="space-y-4">
+                    <button id="add-to-cart-btn" class="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      Add to Cart
+                    </button>
+                    
+                    <a href="${product.buyUrl}" target="_blank" class="block w-full bg-green-600 text-white py-3 rounded-md hover:bg-green-700 transition text-center">
+                      Buy Now
+                    </a>
+                  </div>
+                  
+                  <div class="mt-6 text-sm text-gray-500">
+                    <p>Product ID: ${product.id}</p>
+                    <p>Added on: ${new Date(product.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          
+          <section class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Comments</h2>
+            
+            ${currentUser ? `
+              <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                <h3 class="font-semibold text-lg mb-2">Add a Comment</h3>
+                <form id="comment-form" class="space-y-4">
+                  <div>
+                    <textarea id="comment-text" class="w-full border rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Write your comment here..."></textarea>
+                  </div>
+                  <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                    Post Comment
+                  </button>
+                </form>
+              </div>
+            ` : `
+              <div class="bg-blue-50 text-blue-800 p-4 rounded-md mb-6">
+                <p>Please <a href="#" id="login-to-comment" class="font-semibold underline">login</a> to leave a comment.</p>
+              </div>
+            `}
+            
+            <div id="comments-container" class="space-y-4">
+              ${comments.length > 0 ? comments.map(comment => `
+                <div class="bg-white rounded-lg shadow-md p-4">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <h4 class="font-semibold">${comment.userName}</h4>
+                      <p class="text-gray-500 text-sm">${new Date(comment.createdAt).toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <p class="mt-2">${comment.text}</p>
+                </div>
+              `).join('') : `
+                <p class="text-gray-500 italic">No comments yet. Be the first to comment!</p>
+              `}
+            </div>
+          </section>
+        `;
+        
+        // Add event listener for back to products
+        pageContent.querySelector('[data-page="products"]').addEventListener('click', (e) => {
+          e.preventDefault();
+          navigateTo('products');
+        });
+        
+        // Add event listener for add to cart button
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        addToCartBtn.addEventListener('click', () => addToCart(product));
+        
+        // Add event listener for like button
+        const likeButton = document.getElementById('like-button');
+        likeButton.addEventListener('click', async () => {
+          if (!currentUser) {
+            showLoginModal('Please login to like products');
+            return;
+          }
+          
+          try {
+            if (userHasLiked) {
+              // Remove like
+              const like = likes.find(like => like.userId === currentUser.email);
+              if (like) {
+                await deleteFromStore('likes', like.id);
+                userHasLiked = false;
+                likeButton.classList.remove('text-red-500');
+                likeButton.classList.add('text-gray-500');
+                likeButton.querySelector('svg').setAttribute('fill', 'none');
+                document.getElementById('like-count').textContent = likeCount - 1;
+              }
+            } else {
+              // Add like
+              await addToStore('likes', {
+                productId: parseInt(productId),
+                userId: currentUser.email,
+                createdAt: new Date().toISOString()
+              });
+              userHasLiked = true;
+              likeButton.classList.remove('text-gray-500');
+              likeButton.classList.add('text-red-500');
+              likeButton.querySelector('svg').setAttribute('fill', 'currentColor');
+              document.getElementById('like-count').textContent = likeCount + 1;
+            }
+          } catch (error) {
+            console.error('Error updating like:', error);
+            showNotification('Failed to update like', 'error');
+          }
+        });
+        
+        // Add event listener for comment form
+        const commentForm = document.getElementById('comment-form');
+        if (commentForm) {
+          commentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const commentText = document.getElementById('comment-text').value.trim();
+            if (!commentText) {
+              showNotification('Please enter a comment', 'error');
+              return;
+            }
+            
+            try {
+              const comment = {
+                productId: parseInt(productId),
+                userId: currentUser.email,
+                userName: currentUser.name,
+                text: commentText,
+                createdAt: new Date().toISOString()
+              };
+              
+              await addToStore('comments', comment);
+              
+              // Update comments container
+              const commentsContainer = document.getElementById('comments-container');
+              
+              // Remove "no comments" message if it exists
+              const noCommentsMessage = commentsContainer.querySelector('p.italic');
+              if (noCommentsMessage) {
+                commentsContainer.innerHTML = '';
+              }
+              
+              // Add new comment
+              const commentElement = document.createElement('div');
+              commentElement.className = 'bg-white rounded-lg shadow-md p-4';
+              commentElement.innerHTML = `
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-semibold">${comment.userName}</h4>
+                    <p class="text-gray-500 text-sm">${new Date(comment.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+                <p class="mt-2">${comment.text}</p>
+              `;
+              commentsContainer.prepend(commentElement);
+              
+              // Clear comment form
+              document.getElementById('comment-text').value = '';
+              
+              showNotification('Comment added successfully');
+            } catch (error) {
+              console.error('Error adding comment:', error);
+              showNotification('Failed to add comment', 'error');
+            }
+          });
+        }
+        
+        // Add event listener for login to comment
+        const loginToComment = document.getElementById('login-to-comment');
+        if (loginToComment) {
+          loginToComment.addEventListener('click', (e) => {
+            e.preventDefault();
+            showLoginModal();
+          });
+        }
+      } catch (error) {
+        console.error('Error rendering product detail:', error);
+        pageContent.innerHTML = '<div class="text-center py-8"><p class="text-xl text-red-600">Error loading product details</p></div>';
+      }
+    }
+    
+    async function renderBlogDetail(blogId) {
+      const pageContent = document.getElementById('page-content');
+      
+      // Show loading indicator
+      pageContent.innerHTML = '<div class="loader"></div>';
+      
+      try {
+        // Get blog details
+        const blog = await getFromStore('blogs', parseInt(blogId));
+        if (!blog) {
+          pageContent.innerHTML = '<div class="text-center py-8"><p class="text-xl text-gray-600">Blog post not found</p></div>';
+          return;
+        }
+        
+        pageContent.innerHTML = `
+          <section>
+            <div class="mb-4">
+              <a href="#" class="text-blue-600 hover:text-blue-800 flex items-center" data-page="blog">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Blog
+              </a>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+              <img src="${blog.imageUrl}" alt="${blog.title}" class="w-full h-64 object-cover">
+              
+              <div class="p-6">
+                <div class="flex flex-wrap gap-2 mb-4">
+                  ${blog.tags.map(tag => `
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${tag}</span>
+                  `).join('')}
+                </div>
+                
+                <h1 class="text-3xl font-bold text-gray-800 mb-4">${blog.title}</h1>
+                <p class="text-gray-500 mb-6">Published on ${new Date(blog.createdAt).toLocaleDateString()}</p>
+                
+                <div class="prose max-w-none">
+                  <p>${blog.description}</p>
+                  
+                  <!-- Sample content for the blog post -->
+                  <p class="my-4">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod, nisl vel ultricies lacinia, 
+                    nisl nisl aliquam nisl, eget aliquam nisl nisl sit amet nisl. Sed euismod, nisl vel ultricies lacinia,
+                    nisl nisl aliquam nisl, eget aliquam nisl nisl sit amet nisl.
+                  </p>
+                  
+                  <h2 class="text-2xl font-bold mt-6 mb-4">Key Points</h2>
+                  <ul class="list-disc pl-5 space-y-2">
+                    <li>First important point about ${blog.title}</li>
+                    <li>Second key consideration for implementation</li>
+                    <li>Third aspect to keep in mind</li>
+                    <li>Final thoughts on the subject</li>
+                  </ul>
+                  
+                  <p class="my-4">
+                    Sed euismod, nisl vel ultricies lacinia, nisl nisl aliquam nisl, eget aliquam nisl nisl sit amet nisl.
+                    Sed euismod, nisl vel ultricies lacinia, nisl nisl aliquam nisl, eget aliquam nisl nisl sit amet nisl.
+                  </p>
+                  
+                  <h2 class="text-2xl font-bold mt-6 mb-4">Conclusion</h2>
+                  <p>
+                    In conclusion, ${blog.title} represents an important development in the field. By understanding and
+                    implementing these concepts, you can improve your projects and workflows significantly.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        `;
+        
+        // Add event listener for back to blog
+        pageContent.querySelector('[data-page="blog"]').addEventListener('click', (e) => {
+          e.preventDefault();
+          navigateTo('blog');
+        });
+      } catch (error) {
+        console.error('Error rendering blog detail:', error);
+        pageContent.innerHTML = '<div class="text-center py-8"><p class="text-xl text-red-600">Error loading blog details</p></div>';
+      }
+    }
+    
+    // Authentication UI
+    function showLoginModal(message = null) {
+      const modalContent = `
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">Login</h2>
+            <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          ${message ? `<p class="mb-4 text-blue-600">${message}</p>` : ''}
+          
+          <form id="login-form" class="space-y-4">
+            <div>
+              <label for="login-email" class="block text-gray-700 mb-1">Email</label>
+              <input type="email" id="login-email" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div>
+              <label for="login-password" class="block text-gray-700 mb-1">Password</label>
+              <input type="password" id="login-password" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition">
+              Login
+            </button>
+          </form>
+          
+          <div class="mt-4 text-center">
+            <p>Don't have an account? <a href="#" id="show-register" class="text-blue-600 hover:text-blue-800">Register</a></p>
+          </div>
+        </div>
+      `;
+      
+      showModal(modalContent);
+      
+      // Add event listeners
+      document.getElementById('close-modal').addEventListener('click', closeModal);
+      
+      document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        
+        try {
+          const user = await loginUser(email, password);
+          currentUser = user;
+          updateAuthUI();
+          closeModal();
+          showNotification(`Welcome back, ${user.name}!`);
+        } catch (error) {
+          showNotification(error.message, 'error');
+        }
+      });
+      
+      document.getElementById('show-register').addEventListener('click', (e) => {
+        e.preventDefault();
+        showRegisterModal();
+      });
+    }
+    
+    function showRegisterModal() {
+      const modalContent = `
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">Register</h2>
+            <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <form id="register-form" class="space-y-4">
+            <div>
+              <label for="register-name" class="block text-gray-700 mb-1">Name</label>
+              <input type="text" id="register-name" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div>
+              <label for="register-email" class="block text-gray-700 mb-1">Email</label>
+              <input type="email" id="register-email" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div>
+              <label for="register-password" class="block text-gray-700 mb-1">Password</label>
+              <input type="password" id="register-password" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              <p class="text-xs text-gray-500 mt-1">Password must be at least 6 characters</p>
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition">
+              Register
+            </button>
+          </form>
+          
+          <div class="mt-4 text-center">
+            <p>Already have an account? <a href="#" id="show-login" class="text-blue-600 hover:text-blue-800">Login</a></p>
+          </div>
+        </div>
+      `;
+      
+      showModal(modalContent);
+      
+      // Add event listeners
+      document.getElementById('close-modal').addEventListener('click', closeModal);
+      
+      document.getElementById('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const name = document.getElementById('register-name').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        
+        if (password.length < 6) {
+          showNotification('Password must be at least 6 characters', 'error');
+          return;
+        }
+        
+        try {
+          const user = await registerUser(name, email, password);
+          currentUser = user;
+          updateAuthUI();
+          closeModal();
+          showNotification('Registration successful!');
+        } catch (error) {
+          showNotification(error.message, 'error');
+        }
+      });
+      
+      document.getElementById('show-login').addEventListener('click', (e) => {
+        e.preventDefault();
+        showLoginModal();
+      });
+    }
+    
+    function updateAuthUI() {
+      const authContainer = document.getElementById('auth-container');
+      
+      if (currentUser) {
+        authContainer.innerHTML = `
+          <div class="relative">
+            <button id="user-menu-button" class="flex items-center text-white hover:text-blue-200 transition">
+              <span class="mr-2">${currentUser.name}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            
+            <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 hidden">
+              <div class="py-1">
+                <a href="#" id="profile-link" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Profile</a>
+                ${currentUser.role === 'admin' ? `<a href="#" id="admin-link" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Admin Panel</a>` : ''}
+                <a href="#" id="logout-link" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Logout</a>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Add event listeners
+        document.getElementById('user-menu-button').addEventListener('click', () => {
+          document.getElementById('user-menu').classList.toggle('hidden');
+        });
+        
+        document.getElementById('logout-link').addEventListener('click', (e) => {
+          e.preventDefault();
+          currentUser = null;
+          updateAuthUI();
+          showNotification('Logged out successfully');
+        });
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+          const userMenu = document.getElementById('user-menu');
+          const userMenuButton = document.getElementById('user-menu-button');
+          
+          if (userMenu && !userMenu.classList.contains('hidden') && !userMenuButton.contains(e.target) && !userMenu.contains(e.target)) {
+            userMenu.classList.add('hidden');
+          }
+        });
+      } else {
+        authContainer.innerHTML = `
+          <button id="login-btn" class="bg-white text-blue-600 px-4 py-2 rounded-md hover:bg-blue-50 transition">Login</button>
+        `;
+        
+        // Add event listener
+        document.getElementById('login-btn').addEventListener('click', () => {
+          showLoginModal();
+        });
+      }
+    }
+    
+    // Navigation
+    function navigateTo(page) {
+      switch (page) {
+        case 'home':
+          renderHomePage();
+          break;
+        case 'products':
+          renderProductsPage();
+          break;
+        case 'blog':
+          renderBlogPage();
+          break;
+        default:
+          renderHomePage();
+      }
+      
+      // Update active navigation link
+      document.querySelectorAll('nav a').forEach(link => {
+        if (link.dataset.page === page) {
+          link.classList.add('font-semibold');
+        } else {
+          link.classList.remove('font-semibold');
+        }
+      });
+    }
+    
+    // Initialize app
+    async function initApp() {
+      try {
+        await initDB();
+       // await seedInitialData();
+        
+        // Set up event listeners
+        document.querySelectorAll('nav a').forEach(link => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            navigateTo(link.dataset.page);
+          });
+        });
+        
+        // Set up cart toggle
+        const cartToggle = document.getElementById('cart-toggle');
+        const miniCart = document.getElementById('mini-cart');
+        
+        cartToggle.addEventListener('click', () => {
+          miniCart.classList.toggle('open');
+        });
+        
+        // Close mini cart when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!cartToggle.contains(e.target) && !miniCart.contains(e.target)) {
+            miniCart.classList.remove('open');
+          }
+        });
+        
+        // Set up checkout button
+        document.getElementById('checkout-btn').addEventListener('click', () => {
+          if (cart.length === 0) {
+            showNotification('Your cart is empty', 'error');
+            return;
+          }
+          
+          // In a real app, this would redirect to a checkout page
+          showNotification('Proceeding to checkout...');
+        });
+        
+        // Initialize auth UI
+        updateAuthUI();
+        
+        // Load home page by default
+        navigateTo('home');
+      } catch (error) {
+        console.error('Error initializing app:', error);
+        document.body.innerHTML = `
+          <div class="container mx-auto px-4 py-8 text-center">
+            <h1 class="text-2xl font-bold text-red-600 mb-4">Error</h1>
+            <p class="text-gray-800">Failed to initialize the application. Please try again later.</p>
+            <p class="text-gray-600 mt-2">${error.message}</p>
+          </div>
+        `;
+      }
+    }
+    
+    // Start the app
+   // initApp();
+
+window.addEventListener('DOMContentLoaded', async () => {
+    initApp();
+    // Load initial data
+    try {
+    // Initialize the database and sync system
+    window.dbStores = await window.initWebAppMarketDBSync();
+    
+    console.log('WebAppMarketDB initialized and synchronized');
+    
+    // Example of how to use the synced stores:
+    // Add a new user
+    // await window.dbStores.users.add({
+    //   email: 'example@example.com',
+    //   name: 'Example User',
+    //   role: 'customer'
+    // });
+    
+    // Get all products
+    // const products = await window.dbStores.products.getAll();
+    // console.log('Products:', products);
+    
+    // Manual sync (normally happens automatically after changes)
+    // await window.dbStores.sync();
+    
+  } catch (error) {
+    console.error('Error initializing WebAppMarketDB:', error);
+  }
+});
+  </script>
+   <script>
+    // Example function to add a new product
+    async function addProduct(product) {
+      try {
+        const result = await window.dbStores.products.add(product);
+        console.log('Product added with ID:', result);
+        return result;
+      } catch (error) {
+        console.error('Error adding product:', error);
+        throw error;
+      }
+    }
+    
+    // Example function to get all users
+    async function getAllUsers() {
+      try {
+        const users = await window.dbStores.users.getAll();
+        console.log('Users:', users);
+        return users;
+      } catch (error) {
+        console.error('Error getting users:', error);
+        throw error;
+      }
+    }
+  </script>
+  <script type="module" src="indexeddb-sync.js"></script>
+  <script type="module" src="init-sync.js"></script>
+</body>
+</html>

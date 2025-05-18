@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IndexedDB-MongoDB Sync Example</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f9fafb;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            color: #2563eb;
+            margin-top: 0;
+        }
+        .info-box {
+            background-color: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 16px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        button:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+        }
+        .log-container {
+            margin-top: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 16px;
+            background-color: #f9fafb;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .log-entry.info {
+            color: #1f2937;
+        }
+        .log-entry.success {
+            color: #047857;
+        }
+        .log-entry.error {
+            color: #b91c1c;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-indicator.online {
+            background-color: #10b981;
+        }
+        .status-indicator.offline {
+            background-color: #ef4444;
+        }
+        .status-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .status-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .data-container {
+            margin-top: 20px;
+        }
+        .data-item {
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            background-color: white;
+        }
+        .data-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .data-item-title {
+            font-weight: 600;
+        }
+        .data-item-actions button {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        .data-item-content {
+            font-size: 14px;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>IndexedDB-MongoDB Sync Example</h1>
+        
+        <div class="info-box">
+            <p>This example demonstrates bidirectional synchronization between IndexedDB and MongoDB. You can add items locally, sync to the server, and pull changes from the server.</p>
+        </div>
+        
+        <div class="status-container">
+            <div id="status-indicator" class="status-indicator offline"></div>
+            <span id="status-text" class="status-text">Offline</span>
+        </div>
+        
+        <div class="form-group">
+            <label for="api-url">API URL</label>
+            <input type="text" id="api-url" value="https://api.mongodb.wromo.net" />
+        </div>
+        
+        <div class="form-group">
+            <label for="auth-token">Auth Token</label>
+            <input type="text" id="auth-token" placeholder="Bearer token for authentication" />
+        </div>
+        
+        <div class="form-group">
+            <label for="app-id">App ID</label>
+            <input type="text" id="app-id" value="my-app" />
+        </div>
+        
+        <div class="form-group">
+            <label for="collection">Collection</label>
+            <input type="text" id="collection" value="sync_test" />
+        </div>
+        
+        <div class="form-group">
+            <label for="item-content">New Item Content</label>
+            <textarea id="item-content" placeholder="Enter content for a new item"></textarea>
+        </div>
+        
+        <button id="add-item-btn">Add Item Locally</button>
+        <button id="push-sync-btn">Push to Server</button>
+        <button id="pull-sync-btn">Pull from Server</button>
+        <button id="full-sync-btn">Full Sync</button>
+        <button id="clear-local-btn">Clear Local Data</button>
+        
+        <div class="log-container" id="log-container"></div>
+        
+        <h2>Local Data</h2>
+        <div class="data-container" id="data-container">
+            <div class="data-item">
+                <div class="data-item-header">
+                    <div class="data-item-title">No items yet</div>
+                </div>
+                <div class="data-item-content">Add items using the form above.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const apiUrlInput = document.getElementById('api-url');
+            const authTokenInput = document.getElementById('auth-token');
+            const appIdInput = document.getElementById('app-id');
+            const collectionInput = document.getElementById('collection');
+            const itemContentInput = document.getElementById('item-content');
+            const addItemBtn = document.getElementById('add-item-btn');
+            const pushSyncBtn = document.getElementById('push-sync-btn');
+            const pullSyncBtn = document.getElementById('pull-sync-btn');
+            const fullSyncBtn = document.getElementById('full-sync-btn');
+            const clearLocalBtn = document.getElementById('clear-local-btn');
+            const logContainer = document.getElementById('log-container');
+            const dataContainer = document.getElementById('data-container');
+            const statusIndicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            
+            // Generate a unique client ID
+            const CLIENT_ID = localStorage.getItem('sync_client_id') || `client_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+            localStorage.setItem('sync_client_id', CLIENT_ID);
+            
+            // IndexedDB setup
+            const DB_NAME = 'SyncExampleDB';
+            const DB_VERSION = 1;
+            let db;
+            
+            // Logging
+            function log(message, type = 'info') {
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${type}`;
+                logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+            
+            // Online status
+            function updateOnlineStatus() {
+                const isOnline = navigator.onLine;
+                statusIndicator.className = `status-indicator ${isOnline ? 'online' : 'offline'}`;
+                statusText.textContent = isOnline ? 'Online' : 'Offline';
+                
+                // Disable sync buttons when offline
+                pushSyncBtn.disabled = !isOnline;
+                pullSyncBtn.disabled = !isOnline;
+                fullSyncBtn.disabled = !isOnline;
+            }
+            
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
+            updateOnlineStatus();
+            
+            // Initialize IndexedDB
+            function initIndexedDB() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(DB_NAME, DB_VERSION);
+                    
+                    request.onerror = (event) => {
+                        log(`IndexedDB error: ${event.target.error}`, 'error');
+                        reject(event.target.error);
+                    };
+                    
+                    request.onsuccess = (event) => {
+                        db = event.target.result;
+                        log('IndexedDB opened successfully');
+                        resolve(db);
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        
+                        // Create object store for items
+                        if (!db.objectStoreNames.contains('items')) {
+                            const store = db.createObjectStore('items', { keyPath: '_id' });
+                            store.createIndex('updatedAt', '_metadata.updatedAt', { unique: false });
+                            store.createIndex('syncStatus', '_metadata.syncStatus', { unique: false });
+                        }
+                        
+                        // Create object store for sync metadata
+                        if (!db.objectStoreNames.contains('syncMeta')) {
+                            db.createObjectStore('syncMeta', { keyPath: 'key' });
+                        }
+                    };
+                });
+            }
+            
+            // Get all items from IndexedDB
+            async function getAllItems() {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['items'], 'readonly');
+                    const store = transaction.objectStore('items');
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            // Save item to IndexedDB
+            async function saveItem(item) {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['items'], 'readwrite');
+                    const store = transaction.objectStore('items');
+                    
+                    // Ensure item has _id
+                    if (!item._id) {
+                        item._id = `local_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+                    }
+                    
+                    // Add metadata
+                    item._metadata = {
+                        ...(item._metadata || {}),
+                        updatedAt: new Date(),
+                        clientId: CLIENT_ID,
+                        clientVersion: (item._metadata?.clientVersion || 0) + 1,
+                        syncStatus: 'pending'
+                    };
+                    
+                    const request = store.put(item);
+                    
+                    request.onsuccess = () => resolve(item);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            // Delete item from IndexedDB
+            async function deleteItem(id) {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['items'], 'readwrite');
+                    const store = transaction.objectStore('items');
+                    const request = store.delete(id);
+                    
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            // Get sync metadata
+            async function getSyncMeta(key, defaultValue = null) {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['syncMeta'], 'readonly');
+                    const store = transaction.objectStore('syncMeta');
+                    const request = store.get(key);
+                    
+                    request.onsuccess = () => resolve(request.result?.value || defaultValue);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            // Save sync metadata
+            async function saveSyncMeta(key, value) {
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['syncMeta'], 'readwrite');
+                    const store = transaction.objectStore('syncMeta');
+                    const request = store.put({ key, value });
+                    
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            // Push local changes to server
+            async function pushToServer() {
+                try {
+                    const apiUrl = apiUrlInput.value.trim();
+                    const authToken = authTokenInput.value.trim();
+                    const appId = appIdInput.value.trim();
+                    const collection = collectionInput.value.trim();
+                    
+                    // Get items that need to be synced
+                    const transaction = db.transaction(['items'], 'readonly');
+                    const store = transaction.objectStore('items');
+                    const index = store.index('syncStatus');
+                    const request = index.getAll('pending');
+                    
+                    const pendingItems = await new Promise((resolve, reject) => {
+                        request.onsuccess = () => resolve(request.result);
+                        request.onerror = () => reject(request.error);
+                    });
+                    
+                    if (pendingItems.length === 0) {
+                        log('No pending changes to push');
+                        return { success: true, count: 0 };
+                    }
+                    
+                    log(`Pushing ${pendingItems.length} items to server...`);
+                    
+                    // Prepare headers
+                    const headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    
+                    if (authToken) {
+                        headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+                    }
+                    
+                    // Make API request
+                    const response = await fetch(`${apiUrl}/api/sync`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                            appId,
+                            collection,
+                            documents: pendingItems,
+                            clientId: CLIENT_ID,
+                            conflictResolution: 'client-wins'
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Push sync failed');
+                    }
+                    
+                    const result = await response.json();
+                    
+                    // Update sync status for pushed items
+                    const updateTransaction = db.transaction(['items'], 'readwrite');
+                    const updateStore = updateTransaction.objectStore('items');
+                    
+                    for (const item of pendingItems) {
+                        item._metadata.syncStatus = 'synced';
+                        updateStore.put(item);
+                    }
+                    
+                    log(`Successfully pushed ${pendingItems.length} items to server`, 'success');
+                    return result;
+                } catch (error) {
+                    log(`Push sync error: ${error.message}`, 'error');
+                    throw error;
+                }
+            }
+            
+            // Pull changes from server
+            async function pullFromServer() {
+                try {
+                    const apiUrl = apiUrlInput.value.trim();
+                    const authToken = authTokenInput.value.trim();
+                    const appId = appIdInput.value.trim();
+                    const collection = collectionInput.value.trim();
+                    
+                    // Get last sync timestamp
+                    const lastSyncTimestamp = await getSyncMeta('lastSyncTimestamp');
+                    
+                    log(`Pulling changes since ${lastSyncTimestamp || 'beginning'}...`);
+                    
+                    // Prepare headers
+                    const headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    
+                    if (authToken) {
+                        headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+                    }
+                    
+                    // Make API request
+                    const response = await fetch(`${apiUrl}/api/sync/pull`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                            appId,
+                            collection,
+                            lastSyncTimestamp,
+                            clientIds: [CLIENT_ID],
+                            limit: 100
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Pull sync failed');
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.documents.length === 0) {
+                        log('No new changes from server');
+                        
+                        // Still update the last sync timestamp
+                        await saveSyncMeta('lastSyncTimestamp', result.serverTimestamp);
+                        
+                        return { success: true, count: 0 };
+                    }
+                    
+                    // Save pulled documents to IndexedDB
+                    const transaction = db.transaction(['items'], 'readwrite');
+                    const store = transaction.objectStore('items');
+                    
+                    for (const doc of result.documents) {
+                        // Mark as synced
+                        doc._metadata = {
+                            ...(doc._metadata || {}),
+                            syncStatus: 'synced'
+                        };
+                        
+                        store.put(doc);
+                    }
+                    
+                    // Update last sync timestamp
+                    await saveSyncMeta('lastSyncTimestamp', result.serverTimestamp);
+                    
+                    log(`Successfully pulled ${result.documents.length} items from server`, 'success');
+                    return result;
+                } catch (error) {
+                    log(`Pull sync error: ${error.message}`, 'error');
+                    throw error;
+                }
+            }
+            
+            // Full sync (push then pull)
+            async function fullSync() {
+                try {
+                    log('Starting full sync...');
+                    
+                    // First push local changes
+                    await pushToServer();
+                    
+                    // Then pull remote changes
+                    await pullFromServer();
+                    
+                    log('Full sync completed successfully', 'success');
+                    
+                    // Refresh UI
+                    renderItems();
+                } catch (error) {
+                    log(`Full sync error: ${error.message}`, 'error');
+                }
+            }
+            
+            // Clear local data
+            async function clearLocalData() {
+                if (!confirm('Are you sure you want to clear all local data? This cannot be undone.')) {
+                    return;
+                }
+                
+                try {
+                    const transaction = db.transaction(['items', 'syncMeta'], 'readwrite');
+                    transaction.objectStore('items').clear();
+                    transaction.objectStore('syncMeta').clear();
+                    
+                    log('Local data cleared successfully');
+                    renderItems();
+                } catch (error) {
+                    log(`Error clearing local data: ${error.message}`, 'error');
+                }
+            }
+            
+            // Render items in UI
+            async function renderItems() {
+                try {
+                    const items = await getAllItems();
+                    
+                    dataContainer.innerHTML = '';
+                    
+                    if (items.length === 0) {
+                        const emptyItem = document.createElement('div');
+                        emptyItem.className = 'data-item';
+                        emptyItem.innerHTML = `
+                            <div class="data-item-header">
+                                <div class="data-item-title">No items yet</div>
+                            </div>
+                            <div class="data-item-content">Add items using the form above.</div>
+                        `;
+                        dataContainer.appendChild(emptyItem);
+                        return;
+                    }
+                    
+                    // Sort by updatedAt, newest first
+                    items.sort((a, b) => {
+                        const dateA = new Date(a._metadata?.updatedAt || 0);
+                        const dateB = new Date(b._metadata?.updatedAt || 0);
+                        return dateB - dateA;
+                    });
+                    
+                    for (const item of items) {
+                        const itemEl = document.createElement('div');
+                        itemEl.className = 'data-item';
+                        
+                        const syncStatus = item._metadata?.syncStatus || 'unknown';
+                        const updatedAt = item._metadata?.updatedAt 
+                            ? new Date(item._metadata.updatedAt).toLocaleString() 
+                            : 'Unknown';
+                        
+                        itemEl.innerHTML = `
+                            <div class="data-item-header">
+                                <div class="data-item-title">${item._id}</div>
+                                <div class="data-item-actions">
+                                    <button class="delete-btn" data-id="${item._id}">Delete</button>
+                                </div>
+                            </div>
+                            <div class="data-item-content">${item.content}</div>
+                            <div class="data-item-meta" style="font-size: 12px; color: #6b7280; margin-top: 8px;">
+                                Status: <span style="color: ${syncStatus === 'synced' ? '#047857' : '#b45309'}">${syncStatus}</span> | 
+                                Updated: ${updatedAt} | 
+                                Version: ${item._metadata?.clientVersion || 0}
+                            </div>
+                        `;
+                        
+                        dataContainer.appendChild(itemEl);
+                    }
+                    
+                    // Add event listeners to delete buttons
+                    document.querySelectorAll('.delete-btn').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            const id = e.target.getAttribute('data-id');
+                            if (confirm(`Are you sure you want to delete item ${id}?`)) {
+                                await deleteItem(id);
+                                log(`Item ${id} deleted locally`);
+                                renderItems();
+                            }
+                        });
+                    });
+                } catch (error) {
+                    log(`Error rendering items: ${error.message}`, 'error');
+                }
+            }
+            
+            // Add event listeners
+            addItemBtn.addEventListener('click', async () => {
+                const content = itemContentInput.value.trim();
+                
+                if (!content) {
+                    alert('Please enter content for the item');
+                    return;
+                }
+                
+                try {
+                    const item = await saveItem({ content });
+                    log(`Item added locally: ${item._id}`);
+                    itemContentInput.value = '';
+                    renderItems();
+                } catch (error) {
+                    log(`Error adding item: ${error.message}`, 'error');
+                }
+            });
+            
+            pushSyncBtn.addEventListener('click', async () => {
+                try {
+                    await pushToServer();
+                    renderItems();
+                } catch (error) {
+                    // Error is already logged in pushToServer
+                }
+            });
+            
+            pullSyncBtn.addEventListener('click', async () => {
+                try {
+                    await pullFromServer();
+                    renderItems();
+                } catch (error) {
+                    // Error is already logged in pullFromServer
+                }
+            });
+            
+            fullSyncBtn.addEventListener('click', async () => {
+                try {
+                    await fullSync();
+                } catch (error) {
+                    // Error is already logged in fullSync
+                }
+            });
+            
+            clearLocalBtn.addEventListener('click', async () => {
+                try {
+                    await clearLocalData();
+                } catch (error) {
+                    log(`Error clearing data: ${error.message}`, 'error');
+                }
+            });
+            
+            // Initialize
+            (async function init() {
+                try {
+                    await initIndexedDB();
+                    renderItems();
+                    
+                    // Auto-sync if online
+                    if (navigator.onLine) {
+                        setTimeout(() => {
+                            fullSync().catch(err => {
+                                log(`Auto-sync error: ${err.message}`, 'error');
+                            });
+                        }, 1000);
+                    }
+                } catch (error) {
+                    log(`Initialization error: ${error.message}`, 'error');
+                }
+            })();
+        });
+    </script>
+</body>
+</html>
